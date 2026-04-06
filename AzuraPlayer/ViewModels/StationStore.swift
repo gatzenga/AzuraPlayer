@@ -1,16 +1,45 @@
 import Foundation
 import SwiftUI
 import Combine
+import WatchConnectivity
 
-class StationStore: ObservableObject {
+class StationStore: NSObject, ObservableObject, WCSessionDelegate {
     @Published var stations: [RadioStation] = []
 
     private let saveKey = "saved_stations"
 
-    init() {
+    override init() {
+        super.init()
+        if WCSession.isSupported() {
+            WCSession.default.delegate = self
+            WCSession.default.activate()
+        }
         load()
         stations.forEach { fetchStationName(for: $0) }
     }
+
+    // MARK: - WCSessionDelegate
+
+    func session(_ session: WCSession,
+                 activationDidCompleteWith activationState: WCSessionActivationState,
+                 error: Error?) {
+        sendToWatch()
+    }
+
+    func sessionDidBecomeInactive(_ session: WCSession) {}
+    func sessionDidDeactivate(_ session: WCSession) {
+        WCSession.default.activate()
+    }
+
+    // MARK: - Watch Sync
+
+    func sendToWatch() {
+        guard WCSession.default.activationState == .activated else { return }
+        guard let data = try? JSONEncoder().encode(stations) else { return }
+        try? WCSession.default.updateApplicationContext(["stations": data])
+    }
+
+    // MARK: - CRUD
 
     func add(station: RadioStation) {
         var s = station
@@ -18,6 +47,7 @@ class StationStore: ObservableObject {
         stations.append(s)
         save()
         fetchStationName(for: s)
+        sendToWatch()
     }
 
     func update(station: RadioStation) {
@@ -25,18 +55,23 @@ class StationStore: ObservableObject {
             stations[idx] = station
             save()
             fetchStationName(for: station)
+            sendToWatch()
         }
     }
 
     func delete(station: RadioStation) {
         stations.removeAll { $0.id == station.id }
         save()
+        sendToWatch()
     }
 
     func move(from: IndexSet, to: Int) {
         stations.move(fromOffsets: from, toOffset: to)
         save()
+        sendToWatch()
     }
+
+    // MARK: - Fetch / Save / Load
 
     func fetchStationName(for station: RadioStation) {
         guard !station.apiURL.isEmpty,
@@ -70,3 +105,4 @@ class StationStore: ObservableObject {
         }
     }
 }
+

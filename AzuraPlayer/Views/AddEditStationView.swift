@@ -20,7 +20,7 @@ struct AddEditStationView: View {
         NavigationStack {
             Form {
                 Section("Stream-Daten") {
-                    TextField("Name (optional – sonst Servername)", text: $customName)
+                    TextField("Name (optional – sonst Sendername)", text: $customName)
                         .autocorrectionDisabled()
 
                     TextField("Stream-URL", text: $streamURL)

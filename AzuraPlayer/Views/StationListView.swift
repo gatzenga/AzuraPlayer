@@ -37,10 +37,7 @@ struct StationListView: View {
                         }
                         .tint(.accentColor)
                     }
-                    .listRowBackground(
-                        Color(UIColor.systemBackground)
-                            .opacity(0.0)
-                    )
+                    .listRowBackground(Color.clear)
                 }
                 .onMove { from, to in
                     store.move(from: from, to: to)
@@ -100,3 +97,4 @@ struct StationListView: View {
         }
     }
 }
+
