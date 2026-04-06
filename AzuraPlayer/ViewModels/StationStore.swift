@@ -74,12 +74,14 @@ class StationStore: NSObject, ObservableObject, WCSessionDelegate {
 
     func delete(station: RadioStation) {
         stations.removeAll { $0.id == station.id }
+        for i in stations.indices { stations[i].sortOrder = i }
         save()
         sendToWatch()
     }
 
     func move(from: IndexSet, to: Int) {
         stations.move(fromOffsets: from, toOffset: to)
+        for i in stations.indices { stations[i].sortOrder = i }
         save()
         sendToWatch()
     }

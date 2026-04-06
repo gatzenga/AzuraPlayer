@@ -12,10 +12,11 @@ class WatchNowPlayingManager: NSObject, ObservableObject {
 
     private var player: AVPlayer?
     private var pollTask: Task<Void, Never>?
+    private var sessionActivated = false
 
     override init() {
         super.init()
-        setupAudioSession()
+        configureAudioCategory()
         setupRemoteControls()
         setupInterruptionHandling()
     }
@@ -26,17 +27,52 @@ class WatchNowPlayingManager: NSObject, ObservableObject {
 
     // MARK: - Audio Session
 
-    private func setupAudioSession() {
+    // Schritt 1: Kategorie einmalig bei init setzen (synchron, OK auf watchOS)
+    private func configureAudioCategory() {
         do {
             try AVAudioSession.sharedInstance().setCategory(
                 .playback,
                 mode: .default,
-                policy: .longFormAudio
+                policy: .longFormAudio,
+                options: []
             )
-            try AVAudioSession.sharedInstance().setActive(true)
         } catch {
-            print("Watch audio session error: \(error)")
+            print("Watch audio category error: \(error)")
         }
+    }
+
+    // Schritt 2: Session ASYNCHRON aktivieren (Apple WWDC19-716: Pflicht auf watchOS)
+    // watchOS zeigt bei Bedarf automatisch den Audio-Route-Picker (AirPods etc.)
+    private func activateAndPlay(station: RadioStation, url: URL) {
+        if sessionActivated {
+            startPlayback(station: station, url: url)
+            return
+        }
+
+        AVAudioSession.sharedInstance().activate(options: []) { [weak self] success, error in
+            guard let self else { return }
+            if let error = error {
+                print("Watch session activation error: \(error)")
+                return
+            }
+            guard success else { return }
+
+            DispatchQueue.main.async {
+                self.sessionActivated = true
+                self.startPlayback(station: station, url: url)
+            }
+        }
+    }
+
+    private func startPlayback(station: RadioStation, url: URL) {
+        let item = AVPlayerItem(url: url)
+        player = AVPlayer(playerItem: item)
+        player?.automaticallyWaitsToMinimizeStalling = false
+        player?.play()
+
+        isPlaying = true
+        startPolling(station: station)
+        updateNowPlaying()
     }
 
     private func setupInterruptionHandling() {
@@ -53,9 +89,10 @@ class WatchNowPlayingManager: NSObject, ObservableObject {
               let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
               let type = AVAudioSession.InterruptionType(rawValue: typeValue) else { return }
 
-        if type == .ended {
-            try? AVAudioSession.sharedInstance().setActive(true)
-            if isPlaying, let station = currentStation {
+        if type == .began {
+            sessionActivated = false
+        } else if type == .ended {
+            if let station = currentStation {
                 play(station: station)
             }
         }
@@ -66,23 +103,15 @@ class WatchNowPlayingManager: NSObject, ObservableObject {
     func play(station: RadioStation) {
         guard let url = URL(string: station.streamURL) else { return }
 
-        player?.pause()
+        player?.replaceCurrentItem(with: nil)
         player = nil
 
-        let item = AVPlayerItem(url: url)
-        player = AVPlayer(playerItem: item)
-        player?.automaticallyWaitsToMinimizeStalling = false
-        player?.play()
-
         currentStation = station
-        isPlaying = true
-
-        startPolling(station: station)
-        updateNowPlaying()
+        activateAndPlay(station: station, url: url)
     }
 
     func stop() {
-        player?.pause()
+        player?.replaceCurrentItem(with: nil)
         player = nil
         isPlaying = false
         currentStation = nil
@@ -95,10 +124,9 @@ class WatchNowPlayingManager: NSObject, ObservableObject {
     }
 
     func pause() {
-        player?.pause()
+        player?.replaceCurrentItem(with: nil)
         player = nil
         isPlaying = false
-        // pollTask läuft weiter → Metadaten-Updates auch bei Pause
         updateNowPlaying()
     }
 
@@ -134,7 +162,6 @@ class WatchNowPlayingManager: NSObject, ObservableObject {
             return .success
         }
 
-        // Nicht relevant für Radio → deaktivieren damit watchOS sie nicht anzeigt
         cc.nextTrackCommand.isEnabled = false
         cc.previousTrackCommand.isEnabled = false
         cc.skipForwardCommand.isEnabled = false

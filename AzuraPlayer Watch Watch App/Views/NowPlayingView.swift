@@ -1,11 +1,12 @@
 import SwiftUI
+import WatchKit
 
 struct NowPlayingView: View {
     @EnvironmentObject var player: WatchNowPlayingManager
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 8) {
 
             // Cover
             Group {
@@ -26,8 +27,8 @@ struct NowPlayingView: View {
                     placeholderIcon
                 }
             }
-            .frame(width: 72, height: 72)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .frame(width: 64, height: 64)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(radius: 4)
 
             // Sendername
@@ -44,7 +45,9 @@ struct NowPlayingView: View {
             MarqueeText(text: combined, font: .footnote.weight(.medium))
                 .foregroundStyle(.primary)
 
-            Spacer(minLength: 0)
+            // Lautstärke (Digital Crown → System-Volume via WKInterfaceVolumeControl)
+            VolumeControl()
+                .frame(height: 12)
 
             // Controls
             HStack(spacing: 20) {
@@ -75,11 +78,8 @@ struct NowPlayingView: View {
             }
         }
         .padding(.horizontal, 6)
-        .padding(.vertical, 10)
+        .padding(.vertical, 6)
         .navigationTitle("")
-        // Kein focusable() – watchOS leitet Crown-Rotation automatisch
-        // ans System-Volume wenn longFormAudio-Session aktiv ist.
-        // focusable() würde Crown-Druck (= Zurück) abfangen und den Stream unterbrechen.
     }
 
     @ViewBuilder
@@ -98,6 +98,20 @@ struct NowPlayingView: View {
                 .font(.title2)
                 .foregroundStyle(.secondary)
         }
+    }
+}
+
+// MARK: - System Volume Control (WKInterfaceVolumeControl → Digital Crown)
+
+private struct VolumeControl: WKInterfaceObjectRepresentable {
+    typealias WKInterfaceObjectType = WKInterfaceVolumeControl
+
+    func makeWKInterfaceObject(context: Context) -> WKInterfaceVolumeControl {
+        WKInterfaceVolumeControl(origin: .local)
+    }
+
+    func updateWKInterfaceObject(_ control: WKInterfaceVolumeControl, context: Context) {
+        control.focus()
     }
 }
 
@@ -125,8 +139,8 @@ private struct MarqueeText: View {
                 .lineLimit(1)
                 .fixedSize()
                 .offset(x: needsScroll ? offset : 0)
-                // .animation auf dem View statt withAnimation im Task –
-                // zuverlässiger auf watchOS da Teil des SwiftUI-Render-Passes
+                // Animation via Modifier statt withAnimation im Task –
+                // läuft im SwiftUI-Render-Pass, zuverlässig auf watchOS
                 .animation(
                     isReturning
                         ? .linear(duration: 0.3)
@@ -137,18 +151,15 @@ private struct MarqueeText: View {
         .frame(maxWidth: .infinity)
         .clipped()
 
-        // Containerbreite: GeometryReader im background
-        // (background ändert die Layout-Grösse des Elternviews nicht)
+        // Containerbreite messen (background = selbe Grösse wie Host-View)
         .background(
             GeometryReader { geo in
                 Color.clear
-                    .onAppear { setContainer(geo.size.width) }
-                    .onChange(of: geo.size.width) { _, w in setContainer(w) }
+                    .preference(key: ContainerWidthKey.self, value: geo.size.width)
             }
         )
 
-        // Textbreite: nahezu-unsichtbare Kopie (opacity statt hidden –
-        // watchOS berechnet Geometrie für hidden Views möglicherweise nicht)
+        // Textbreite messen (nahezu-unsichtbare Kopie mit fixedSize = natürliche Breite)
         .background(alignment: .leading) {
             Text(text)
                 .font(font)
@@ -158,26 +169,32 @@ private struct MarqueeText: View {
                 .background(
                     GeometryReader { geo in
                         Color.clear
-                            .onAppear { setText(geo.size.width) }
-                            .onChange(of: geo.size.width) { _, w in setText(w) }
+                            .preference(key: TextWidthKey.self, value: geo.size.width)
                     }
                 )
         }
 
-        .onChange(of: text) { _, _ in restart() }
+        .onPreferenceChange(ContainerWidthKey.self) { w in
+            guard w > 0, w != containerWidth else { return }
+            containerWidth = w
+            restart()
+        }
+        .onPreferenceChange(TextWidthKey.self) { w in
+            guard w > 0, w != textWidth else { return }
+            textWidth = w
+            restart()
+        }
+        .onChange(of: text) { _, _ in
+            textWidth = 0
+            restart()
+        }
+        .onAppear {
+            // Safety: nochmals restart nach erstem Layout-Pass
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                restart()
+            }
+        }
         .onDisappear { scrollTask?.cancel() }
-    }
-
-    private func setContainer(_ w: CGFloat) {
-        guard w > 0, w != containerWidth else { return }
-        containerWidth = w
-        restart()
-    }
-
-    private func setText(_ w: CGFloat) {
-        guard w > 0, w != textWidth else { return }
-        textWidth = w
-        restart()
     }
 
     private func restart() {
@@ -194,8 +211,6 @@ private struct MarqueeText: View {
             do {
                 try await Task.sleep(for: .seconds(2))
                 while !Task.isCancelled {
-                    // Offset ändern ohne withAnimation –
-                    // .animation(_:value:) auf dem View übernimmt die Animation
                     isReturning = false
                     offset = -dist
                     try await Task.sleep(for: .seconds(dur + 1.5))
@@ -206,5 +221,19 @@ private struct MarqueeText: View {
                 }
             } catch {}
         }
+    }
+}
+
+private struct ContainerWidthKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
+private struct TextWidthKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
