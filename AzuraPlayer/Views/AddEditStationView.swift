@@ -26,12 +26,12 @@ struct AddEditStationView: View {
                     TextField("Stream-URL", text: $streamURL)
                         .keyboardType(.URL)
                         .autocorrectionDisabled()
-                        .autocapitalization(.none)
+                        .textInputAutocapitalization(.never)
 
                     TextField("API-URL (Now Playing)", text: $apiURL)
                         .keyboardType(.URL)
                         .autocorrectionDisabled()
-                        .autocapitalization(.none)
+                        .textInputAutocapitalization(.never)
                 }
 
                 Section("Cover") {

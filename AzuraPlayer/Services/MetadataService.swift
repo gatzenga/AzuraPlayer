@@ -42,17 +42,14 @@ class MetadataService: ObservableObject {
 
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
+            let response = try JSONDecoder().decode(NowPlayingResponse.self, from: data)
 
-            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let stationData = json["station"] as? [String: Any],
-                  let name = stationData["name"] as? String,
-                  let shortcode = stationData["shortcode"] as? String else { return }
-
-            stationName = name
-            isOnline = (json["is_online"] as? Bool) ?? true
-            isLive = false
+            stationName = response.station.name
+            isOnline = response.isOnline
+            isLive = response.live?.isLive ?? false
             isConnecting = false
 
+            let shortcode = response.station.shortcode
             if let components = URLComponents(url: url, resolvingAgainstBaseURL: true),
                let scheme = components.scheme,
                let host = components.host {
@@ -62,19 +59,8 @@ class MetadataService: ObservableObject {
                 }
             }
 
-            if let nowPlayingDict = json["now_playing"] as? [String: Any],
-               let songDict = nowPlayingDict["song"] as? [String: Any],
-               let title = songDict["title"] as? String,
-               let artist = songDict["artist"] as? String {
-
-                let newSong = SongInfo(
-                    title: title,
-                    artist: artist,
-                    art: songDict["art"] as? String,
-                    album: songDict["album"] as? String
-                )
-
-                if currentTrack?.title != title || currentTrack?.artist != artist {
+            if let newSong = response.nowPlaying?.song {
+                if currentTrack?.title != newSong.title || currentTrack?.artist != newSong.artist {
                     currentTrack = newSong
                 }
             }

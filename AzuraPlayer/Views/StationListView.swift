@@ -3,7 +3,6 @@ import SwiftUI
 struct StationListView: View {
     @EnvironmentObject var store: StationStore
     @EnvironmentObject var player: AudioPlayerService
-    @Binding var showPlayer: Bool
 
     @State private var showAddStation = false
     @State private var editingStation: RadioStation? = nil

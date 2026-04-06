@@ -132,9 +132,6 @@ struct PlayerView: View {
         }
         .background(Color(UIColor.systemBackground))
         .ignoresSafeArea()
-        .presentationDetents([.large])
-        .presentationBackgroundInteraction(.enabled)
-        .presentationCornerRadius(24)
     }
 
     private var placeholder: some View {

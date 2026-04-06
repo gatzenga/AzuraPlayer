@@ -16,7 +16,7 @@ struct ContentView: View {
                 .ignoresSafeArea()
 
             TabView(selection: $selectedTab) {
-                StationListView(showPlayer: $showPlayer)
+                StationListView()
                     .tabItem { Label("Home", systemImage: "house.fill") }
                     .tag(0)
 

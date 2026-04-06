@@ -2,7 +2,6 @@ import AVFoundation
 import MediaPlayer
 import Combine
 import UIKit
-import SwiftUI
 
 class AudioPlayerService: ObservableObject {
     static let shared = AudioPlayerService()
@@ -40,17 +39,20 @@ class AudioPlayerService: ObservableObject {
     }
 
     func play(station: RadioStation) {
+        reconnectAttempts = 0
+        lastDisplayedArtURL = nil
+        currentArtwork = nil
+        startStream(station: station)
+    }
+
+    private func startStream(station: RadioStation) {
         guard let url = URL(string: station.streamURL) else { return }
 
         stopReconnectTimer()
         stopMetadataTimer()
 
-        currentArtwork = nil
-        lastDisplayedArtURL = nil
-
         currentStation = station
         isBuffering = true
-        reconnectAttempts = 0
 
         player?.pause()
         player = nil
@@ -195,7 +197,7 @@ class AudioPlayerService: ObservableObject {
         reconnectTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
             guard let self, let station = self.currentStation else { return }
             self.reconnectAttempts += 1
-            self.play(station: station)
+            self.startStream(station: station)
         }
     }
 
