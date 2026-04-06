@@ -36,7 +36,7 @@ struct NowPlayingView: View {
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
 
-            // Titel · Künstler – Laufschrift wenn zu lang, sonst zentriert
+            // Titel · Künstler
             let title = player.songTitle.isEmpty ? "Unbekannt" : player.songTitle
             let artist = player.artistName
             let combined = artist.isEmpty ? title : "\(title) · \(artist)"
@@ -77,9 +77,9 @@ struct NowPlayingView: View {
         .padding(.horizontal, 6)
         .padding(.vertical, 10)
         .navigationTitle("")
-        // focusable() → watchOS leitet die Krone automatisch ans System-Volume weiter
-        // (setzt voraus dass WKBackgroundModes: audio gesetzt und Audio-Session aktiv ist)
-        .focusable()
+        // Kein focusable() – watchOS leitet Crown-Rotation automatisch
+        // ans System-Volume wenn longFormAudio-Session aktiv ist.
+        // focusable() würde Crown-Druck (= Zurück) abfangen und den Stream unterbrechen.
     }
 
     @ViewBuilder
@@ -110,6 +110,8 @@ private struct MarqueeText: View {
     @State private var offset: CGFloat = 0
     @State private var textWidth: CGFloat = 0
     @State private var containerWidth: CGFloat = 0
+    @State private var scrollDuration: Double = 3.0
+    @State private var isReturning: Bool = false
     @State private var scrollTask: Task<Void, Never>?
 
     private var needsScroll: Bool {
@@ -117,54 +119,90 @@ private struct MarqueeText: View {
     }
 
     var body: some View {
-        // Sichtbarer Text im ZStack – Alignment steuert ob zentriert oder links
         ZStack(alignment: needsScroll ? .leading : .center) {
             Text(text)
                 .font(font)
                 .lineLimit(1)
                 .fixedSize()
                 .offset(x: needsScroll ? offset : 0)
+                // .animation auf dem View statt withAnimation im Task –
+                // zuverlässiger auf watchOS da Teil des SwiftUI-Render-Passes
+                .animation(
+                    isReturning
+                        ? .linear(duration: 0.3)
+                        : .linear(duration: scrollDuration),
+                    value: offset
+                )
         }
         .frame(maxWidth: .infinity)
         .clipped()
-        // Containerbreite: direkt am äusseren Frame messen, unabhängig vom Text
-        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { w in
-            guard w > 0, w != containerWidth else { return }
-            containerWidth = w
-            restart()
-        }
-        // Textbreite: unsichtbare Kopie im Hintergrund – fixedSize() liefert natürliche Breite
-        // unabhängig davon, was der Container vorschlägt
+
+        // Containerbreite: GeometryReader im background
+        // (background ändert die Layout-Grösse des Elternviews nicht)
+        .background(
+            GeometryReader { geo in
+                Color.clear
+                    .onAppear { setContainer(geo.size.width) }
+                    .onChange(of: geo.size.width) { _, w in setContainer(w) }
+            }
+        )
+
+        // Textbreite: nahezu-unsichtbare Kopie (opacity statt hidden –
+        // watchOS berechnet Geometrie für hidden Views möglicherweise nicht)
         .background(alignment: .leading) {
             Text(text)
                 .font(font)
                 .lineLimit(1)
                 .fixedSize()
-                .hidden()
-                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { w in
-                    guard w > 0, w != textWidth else { return }
-                    textWidth = w
-                    restart()
-                }
+                .opacity(0.001)
+                .background(
+                    GeometryReader { geo in
+                        Color.clear
+                            .onAppear { setText(geo.size.width) }
+                            .onChange(of: geo.size.width) { _, w in setText(w) }
+                    }
+                )
         }
+
         .onChange(of: text) { _, _ in restart() }
         .onDisappear { scrollTask?.cancel() }
+    }
+
+    private func setContainer(_ w: CGFloat) {
+        guard w > 0, w != containerWidth else { return }
+        containerWidth = w
+        restart()
+    }
+
+    private func setText(_ w: CGFloat) {
+        guard w > 0, w != textWidth else { return }
+        textWidth = w
+        restart()
     }
 
     private func restart() {
         scrollTask?.cancel()
         offset = 0
+        isReturning = false
         guard textWidth > containerWidth, textWidth > 0, containerWidth > 0 else { return }
+
         let dist = textWidth - containerWidth + 10
-        let dur = max(Double(dist) / 28.0, 1.0)
+        scrollDuration = max(Double(dist) / 28.0, 1.5)
+        let dur = scrollDuration
+
         scrollTask = Task { @MainActor in
             do {
-                try await Task.sleep(for: .seconds(2.0))
-                while true {
-                    withAnimation(.linear(duration: dur)) { offset = -dist }
+                try await Task.sleep(for: .seconds(2))
+                while !Task.isCancelled {
+                    // Offset ändern ohne withAnimation –
+                    // .animation(_:value:) auf dem View übernimmt die Animation
+                    isReturning = false
+                    offset = -dist
                     try await Task.sleep(for: .seconds(dur + 1.5))
-                    withAnimation(.linear(duration: 0.3)) { offset = 0 }
-                    try await Task.sleep(for: .seconds(2.0))
+                    guard !Task.isCancelled else { break }
+                    isReturning = true
+                    offset = 0
+                    try await Task.sleep(for: .seconds(0.3 + 2.0))
                 }
             } catch {}
         }
