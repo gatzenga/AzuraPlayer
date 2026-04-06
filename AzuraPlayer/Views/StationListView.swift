@@ -42,12 +42,10 @@ struct StationListView: View {
                     store.move(from: from, to: to)
                 }
 
-                VStack {
-                    Color.clear
-                        .frame(height: 100)
-                }
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
+                Color.clear
+                    .frame(height: player.currentStation != nil ? 90 : 0)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)

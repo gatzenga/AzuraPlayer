@@ -41,10 +41,12 @@ struct SettingsView: View {
 
                 Section("Info") {
                     Text("AzuraPlayer v0.1")
-                    Text("Stand: April 2026 · Schweiz")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 }
+
+                Color.clear
+                    .frame(height: 16)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
