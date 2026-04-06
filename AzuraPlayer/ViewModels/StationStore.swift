@@ -90,7 +90,8 @@ class StationStore: NSObject, ObservableObject, WCSessionDelegate {
                 await MainActor.run {
                     if let idx = self.stations.firstIndex(where: { $0.id == station.id }) {
                         self.stations[idx].fetchedStationName = response.station.name
-                        self.sendToWatch()
+                        self.save()        // Name in UserDefaults persistieren
+                        self.sendToWatch() // Watch mit aktuellem Namen versorgen
                     }
                 }
             } catch {
