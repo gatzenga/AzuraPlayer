@@ -97,6 +97,8 @@ private struct MarqueeText: View {
     @State private var scrollTask: Task<Void, Never>?
 
     var body: some View {
+        let fits = containerWidth == 0 || textWidth <= containerWidth
+
         Text(text)
             .font(font)
             .lineLimit(1)
@@ -106,8 +108,8 @@ private struct MarqueeText: View {
                     .onAppear { textWidth = geo.size.width }
                     .onChange(of: text) { _, _ in textWidth = geo.size.width }
             })
-            .offset(x: offset)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .offset(x: fits ? 0 : offset)
+            .frame(maxWidth: .infinity, alignment: fits ? .center : .leading)
             .clipped()
             .background(GeometryReader { geo in
                 Color.clear.onAppear {
