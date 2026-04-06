@@ -13,12 +13,34 @@ class WatchNowPlayingManager: ObservableObject {
     private var player: AVPlayer?
     private var pollTask: Task<Void, Never>?
 
+    init() {
+        setupAudioSession()
+    }
+
+    private func setupAudioSession() {
+        do {
+            try AVAudioSession.sharedInstance().setCategory(
+                .playback,
+                mode: .default,
+                policy: .longFormAudio
+            )
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            print("Watch audio session error: \(error)")
+        }
+    }
+
     func play(station: RadioStation) {
         guard let url = URL(string: station.streamURL) else { return }
 
         player?.pause()
-        player = AVPlayer(url: url)
+        player = nil
+
+        let item = AVPlayerItem(url: url)
+        player = AVPlayer(playerItem: item)
+        player?.automaticallyWaitsToMinimizeStalling = false // wichtig für Live-Streams
         player?.play()
+
         currentStation = station
         isPlaying = true
 
@@ -40,7 +62,7 @@ class WatchNowPlayingManager: ObservableObject {
     }
 
     func pause() {
-        // Stream stoppen, aber Metadaten-Polling läuft weiter → Song wechselt auch bei Pause
+        // Stream stoppen, Metadaten-Polling läuft weiter → Song wechselt auch bei Pause
         player?.pause()
         player = nil
         isPlaying = false

@@ -35,10 +35,17 @@ class StationStore: NSObject, ObservableObject, WCSessionDelegate {
 
     func sendToWatch() {
         guard WCSession.default.activationState == .activated else { return }
-        // customImageData weglassen – updateApplicationContext hat ein 65 KB-Limit
+        // Thumbnail (60×60, JPEG 0.4) statt Originalbild – bleibt unter dem 65 KB-Limit
         let lite = stations.map { s -> RadioStation in
             var copy = s
-            copy.customImageData = nil
+            if let data = s.customImageData, let image = UIImage(data: data) {
+                let size = CGSize(width: 60, height: 60)
+                let renderer = UIGraphicsImageRenderer(size: size)
+                let thumb = renderer.image { _ in image.draw(in: CGRect(origin: .zero, size: size)) }
+                copy.customImageData = thumb.jpegData(compressionQuality: 0.4)
+            } else {
+                copy.customImageData = nil
+            }
             return copy
         }
         guard let data = try? JSONEncoder().encode(lite) else { return }

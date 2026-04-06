@@ -7,16 +7,21 @@ struct NowPlayingView: View {
     var body: some View {
         VStack(spacing: 10) {
 
-            // Cover
+            // Cover: Song-Art wenn gewünscht, sonst Custom-Bild, sonst Platzhalter
             Group {
-                if let urlString = player.artworkURL, let url = URL(string: urlString) {
+                if let station = player.currentStation,
+                   station.showSongArt,
+                   let urlString = player.artworkURL,
+                   let url = URL(string: urlString) {
                     AsyncImage(url: url) { phase in
                         if case .success(let img) = phase {
                             img.resizable().scaledToFill()
                         } else {
-                            placeholderIcon
+                            customOrPlaceholder(station)
                         }
                     }
+                } else if let station = player.currentStation {
+                    customOrPlaceholder(station)
                 } else {
                     placeholderIcon
                 }
@@ -31,13 +36,12 @@ struct NowPlayingView: View {
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
 
-            // Titel · Künstler – Laufschrift wenn zu lang
+            // Titel · Künstler – zentriert wenn passend, Laufschrift wenn zu lang
             let title = player.songTitle.isEmpty ? "Unbekannt" : player.songTitle
             let artist = player.artistName
             let combined = artist.isEmpty ? title : "\(title) · \(artist)"
 
             MarqueeText(text: combined, font: .footnote.weight(.medium))
-                .frame(maxWidth: .infinity)
                 .foregroundStyle(.primary)
 
             Spacer(minLength: 0)
@@ -75,6 +79,15 @@ struct NowPlayingView: View {
         .navigationTitle("")
     }
 
+    @ViewBuilder
+    private func customOrPlaceholder(_ station: RadioStation) -> some View {
+        if let data = station.customImageData, let uiImg = UIImage(data: data) {
+            Image(uiImage: uiImg).resizable().scaledToFill()
+        } else {
+            placeholderIcon
+        }
+    }
+
     private var placeholderIcon: some View {
         ZStack {
             Color.gray.opacity(0.2)
@@ -96,34 +109,36 @@ private struct MarqueeText: View {
     @State private var containerWidth: CGFloat = 0
     @State private var scrollTask: Task<Void, Never>?
 
-    var body: some View {
-        // fits erst true wenn beide Breiten gemessen sind
-        let fits = textWidth > 0 && containerWidth > 0 && textWidth <= containerWidth
+    private var fits: Bool {
+        textWidth > 0 && containerWidth > 0 && textWidth <= containerWidth
+    }
 
+    var body: some View {
         Text(text)
             .font(font)
             .lineLimit(1)
             .fixedSize()
+            // Textbreite messen
             .background(GeometryReader { geo in
-                Color.clear
-                    .onAppear {
-                        textWidth = geo.size.width
-                        restart() // neu prüfen sobald Textbreite bekannt
-                    }
-                    .onChange(of: text) { _, _ in
-                        textWidth = geo.size.width
-                        restart()
-                    }
+                Color.clear.preference(key: MarqueeTextWidthKey.self, value: geo.size.width)
             })
             .offset(x: fits ? 0 : offset)
             .frame(maxWidth: .infinity, alignment: fits ? .center : .leading)
             .clipped()
+            // Containerbreite messen
             .background(GeometryReader { geo in
-                Color.clear.onAppear {
-                    containerWidth = geo.size.width
-                    restart() // neu prüfen sobald Containerbreite bekannt
-                }
+                Color.clear.preference(key: MarqueeContainerWidthKey.self, value: geo.size.width)
             })
+            .onPreferenceChange(MarqueeTextWidthKey.self) { w in
+                guard w != textWidth else { return }
+                textWidth = w
+                restart()
+            }
+            .onPreferenceChange(MarqueeContainerWidthKey.self) { w in
+                guard w != containerWidth else { return }
+                containerWidth = w
+                restart()
+            }
             .onChange(of: text) { _, _ in restart() }
             .onDisappear { scrollTask?.cancel() }
     }
@@ -131,21 +146,29 @@ private struct MarqueeText: View {
     private func restart() {
         scrollTask?.cancel()
         offset = 0
-        // Kurze Verzögerung damit textWidth gemessen ist
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            guard textWidth > containerWidth, containerWidth > 0 else { return }
-            let dist = textWidth - containerWidth + 12
-            let dur = Double(dist) / 28.0
-            scrollTask = Task { @MainActor in
-                do {
-                    while true {
-                        try await Task.sleep(for: .seconds(2.0))   // Pause am Anfang
-                        withAnimation(.linear(duration: dur)) { offset = -dist }
-                        try await Task.sleep(for: .seconds(dur + 1.5)) // Pause am Ende
-                        withAnimation(.linear(duration: 0.25)) { offset = 0 }
-                    }
-                } catch { /* Task abgebrochen (Text geändert oder View weg) */ }
-            }
+        guard textWidth > containerWidth, textWidth > 0, containerWidth > 0 else { return }
+        let dist = textWidth - containerWidth + 10
+        let dur = max(Double(dist) / 28.0, 1.0)
+        scrollTask = Task { @MainActor in
+            do {
+                try await Task.sleep(for: .seconds(2.0))
+                while true {
+                    withAnimation(.linear(duration: dur)) { offset = -dist }
+                    try await Task.sleep(for: .seconds(dur + 1.5))
+                    withAnimation(.linear(duration: 0.3)) { offset = 0 }
+                    try await Task.sleep(for: .seconds(2.0))
+                }
+            } catch {}
         }
     }
+}
+
+private struct MarqueeTextWidthKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+}
+
+private struct MarqueeContainerWidthKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
 }
