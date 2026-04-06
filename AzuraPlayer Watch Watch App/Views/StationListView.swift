@@ -34,42 +34,53 @@ struct StationListView: View {
                     )
                 }
             }
-            // Floating Now Playing Button – so weit unten wie möglich
-            .overlay(alignment: .bottomTrailing) {
+            // Floating Now Playing Button – in der Displayrundung unten rechts
+            .overlay {
                 if player.currentStation != nil {
-                    Button {
-                        showNowPlaying = true
-                    } label: {
-                        ZStack {
-                            Circle()
-                                .fill(.ultraThinMaterial)
-                                .frame(width: 40, height: 40)
-
-                            Circle()
-                                .fill(Color.blue.opacity(0.55))
-                                .frame(width: 40, height: 40)
-                                .scaleEffect(pulse ? 1.12 : 1.0)
-                                .animation(
-                                    player.isPlaying
-                                        ? .easeInOut(duration: 0.9).repeatForever(autoreverses: true)
-                                        : .default,
-                                    value: pulse
-                                )
-
-                            Image(systemName: player.isPlaying ? "waveform" : "pause.fill")
-                                .font(.footnote.weight(.bold))
-                                .foregroundStyle(.white)
+                    VStack(spacing: 0) {
+                        Spacer()
+                        HStack(spacing: 0) {
+                            Spacer()
+                            floatingButton
+                                .padding(.trailing, 7)
+                                .padding(.bottom, 7)
                         }
                     }
-                    .buttonStyle(.plain)
-                    .padding(.bottom, 0)
-                    .padding(.trailing, 4)
-                    .onAppear { pulse = player.isPlaying }
-                    .onChange(of: player.isPlaying) { _, playing in
-                        pulse = playing
-                    }
+                    .ignoresSafeArea()
                 }
             }
+        }
+    }
+
+    private var floatingButton: some View {
+        Button {
+            showNowPlaying = true
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(.ultraThinMaterial)
+                    .frame(width: 40, height: 40)
+
+                Circle()
+                    .fill(Color.blue.opacity(0.55))
+                    .frame(width: 40, height: 40)
+                    .scaleEffect(pulse ? 1.12 : 1.0)
+                    .animation(
+                        player.isPlaying
+                            ? .easeInOut(duration: 0.9).repeatForever(autoreverses: true)
+                            : .default,
+                        value: pulse
+                    )
+
+                Image(systemName: player.isPlaying ? "waveform" : "pause.fill")
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(.white)
+            }
+        }
+        .buttonStyle(.plain)
+        .onAppear { pulse = player.isPlaying }
+        .onChange(of: player.isPlaying) { _, playing in
+            pulse = playing
         }
     }
 }
