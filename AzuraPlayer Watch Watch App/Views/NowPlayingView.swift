@@ -31,20 +31,19 @@ struct NowPlayingView: View {
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
 
-            // Titel · Künstler in einer Zeile
+            // Titel · Künstler – Laufschrift wenn zu lang
             let title = player.songTitle.isEmpty ? "Unbekannt" : player.songTitle
             let artist = player.artistName
-            Text(artist.isEmpty ? title : "\(title) · \(artist)")
-                .font(.footnote.weight(.medium))
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
+            let combined = artist.isEmpty ? title : "\(title) · \(artist)"
+
+            MarqueeText(text: combined, font: .footnote.weight(.medium))
+                .frame(maxWidth: .infinity)
                 .foregroundStyle(.primary)
 
             Spacer(minLength: 0)
 
             // Controls
             HStack(spacing: 20) {
-                // Pause / Play
                 Button {
                     player.togglePlayPause()
                 } label: {
@@ -57,7 +56,6 @@ struct NowPlayingView: View {
                 }
                 .buttonStyle(.plain)
 
-                // Stop
                 Button {
                     player.stop()
                     dismiss()
@@ -83,6 +81,62 @@ struct NowPlayingView: View {
             Image(systemName: "music.note.house")
                 .font(.title2)
                 .foregroundStyle(.secondary)
+        }
+    }
+}
+
+// MARK: - Marquee Text
+
+private struct MarqueeText: View {
+    let text: String
+    let font: Font
+
+    @State private var offset: CGFloat = 0
+    @State private var textWidth: CGFloat = 0
+    @State private var containerWidth: CGFloat = 0
+    @State private var scrollTask: Task<Void, Never>?
+
+    var body: some View {
+        Text(text)
+            .font(font)
+            .lineLimit(1)
+            .fixedSize()
+            .background(GeometryReader { geo in
+                Color.clear
+                    .onAppear { textWidth = geo.size.width }
+                    .onChange(of: text) { _, _ in textWidth = geo.size.width }
+            })
+            .offset(x: offset)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .clipped()
+            .background(GeometryReader { geo in
+                Color.clear.onAppear {
+                    containerWidth = geo.size.width
+                    restart()
+                }
+            })
+            .onChange(of: text) { _, _ in restart() }
+            .onDisappear { scrollTask?.cancel() }
+    }
+
+    private func restart() {
+        scrollTask?.cancel()
+        offset = 0
+        // Kurze Verzögerung damit textWidth gemessen ist
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            guard textWidth > containerWidth, containerWidth > 0 else { return }
+            let dist = textWidth - containerWidth + 12
+            let dur = Double(dist) / 28.0
+            scrollTask = Task { @MainActor in
+                do {
+                    while true {
+                        try await Task.sleep(for: .seconds(2.0))   // Pause am Anfang
+                        withAnimation(.linear(duration: dur)) { offset = -dist }
+                        try await Task.sleep(for: .seconds(dur + 1.5)) // Pause am Ende
+                        withAnimation(.linear(duration: 0.25)) { offset = 0 }
+                    }
+                } catch { /* Task abgebrochen (Text geändert oder View weg) */ }
+            }
         }
     }
 }
