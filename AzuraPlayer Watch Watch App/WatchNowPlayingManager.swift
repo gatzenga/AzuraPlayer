@@ -107,6 +107,12 @@ class WatchNowPlayingManager: NSObject, ObservableObject, WKExtendedRuntimeSessi
         }
     }
 
+    var currentVolume: Float { player?.volume ?? 1.0 }
+
+    func setVolume(_ volume: Float) {
+        player?.volume = volume
+    }
+
     // MARK: - Extended Runtime Session (background audio)
 
     private func startExtendedSession() {

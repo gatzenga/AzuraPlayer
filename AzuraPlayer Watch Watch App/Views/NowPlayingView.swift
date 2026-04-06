@@ -4,6 +4,8 @@ struct NowPlayingView: View {
     @EnvironmentObject var player: WatchNowPlayingManager
     @Environment(\.dismiss) var dismiss
 
+    @State private var crownVolume: Double = 1.0
+
     var body: some View {
         VStack(spacing: 10) {
 
@@ -36,7 +38,7 @@ struct NowPlayingView: View {
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
 
-            // Titel · Künstler – zentriert wenn passend, Laufschrift wenn zu lang
+            // Titel · Künstler – linksbündig mit Laufschrift wenn zu lang
             let title = player.songTitle.isEmpty ? "Unbekannt" : player.songTitle
             let artist = player.artistName
             let combined = artist.isEmpty ? title : "\(title) · \(artist)"
@@ -77,6 +79,23 @@ struct NowPlayingView: View {
         .padding(.horizontal, 6)
         .padding(.vertical, 10)
         .navigationTitle("")
+        // Digital Crown → Lautstärke
+        .focusable(true)
+        .digitalCrownRotation(
+            $crownVolume,
+            from: 0.0,
+            through: 1.0,
+            by: 0.05,
+            sensitivity: .medium,
+            isContinuous: false,
+            isHapticFeedbackEnabled: true
+        )
+        .onChange(of: crownVolume) { _, v in
+            player.setVolume(Float(v))
+        }
+        .onAppear {
+            crownVolume = Double(player.currentVolume)
+        }
     }
 
     @ViewBuilder
@@ -109,8 +128,8 @@ private struct MarqueeText: View {
     @State private var containerWidth: CGFloat = 0
     @State private var scrollTask: Task<Void, Never>?
 
-    private var fits: Bool {
-        textWidth > 0 && containerWidth > 0 && textWidth <= containerWidth
+    private var needsScroll: Bool {
+        textWidth > 0 && containerWidth > 0 && textWidth > containerWidth
     }
 
     var body: some View {
@@ -118,24 +137,16 @@ private struct MarqueeText: View {
             .font(font)
             .lineLimit(1)
             .fixedSize()
-            // Textbreite messen
-            .background(GeometryReader { geo in
-                Color.clear.preference(key: MarqueeTextWidthKey.self, value: geo.size.width)
-            })
-            .offset(x: fits ? 0 : offset)
-            .frame(maxWidth: .infinity, alignment: fits ? .center : .leading)
-            .clipped()
-            // Containerbreite messen
-            .background(GeometryReader { geo in
-                Color.clear.preference(key: MarqueeContainerWidthKey.self, value: geo.size.width)
-            })
-            .onPreferenceChange(MarqueeTextWidthKey.self) { w in
-                guard w != textWidth else { return }
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { w in
+                guard w > 0, w != textWidth else { return }
                 textWidth = w
                 restart()
             }
-            .onPreferenceChange(MarqueeContainerWidthKey.self) { w in
-                guard w != containerWidth else { return }
+            .offset(x: needsScroll ? offset : 0)
+            .frame(maxWidth: .infinity, alignment: needsScroll ? .leading : .center)
+            .clipped()
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { w in
+                guard w > 0, w != containerWidth else { return }
                 containerWidth = w
                 restart()
             }
@@ -161,14 +172,4 @@ private struct MarqueeText: View {
             } catch {}
         }
     }
-}
-
-private struct MarqueeTextWidthKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
-}
-
-private struct MarqueeContainerWidthKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
 }
