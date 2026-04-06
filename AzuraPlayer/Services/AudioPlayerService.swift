@@ -132,8 +132,7 @@ class AudioPlayerService: ObservableObject {
 
         isPlaying = false
         isBuffering = false
-        stopMetadataTimer()
-        MetadataService.shared.stopPolling()
+        // Metadata-Polling läuft weiter → Song wechselt auch im Pause-Zustand
 
         // playbackRate = 0 → iOS zeigt Play-Symbol (kein Quadrat)
         DispatchQueue.main.async {

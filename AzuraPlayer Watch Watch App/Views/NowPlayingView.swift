@@ -97,7 +97,8 @@ private struct MarqueeText: View {
     @State private var scrollTask: Task<Void, Never>?
 
     var body: some View {
-        let fits = containerWidth == 0 || textWidth <= containerWidth
+        // fits erst true wenn beide Breiten gemessen sind
+        let fits = textWidth > 0 && containerWidth > 0 && textWidth <= containerWidth
 
         Text(text)
             .font(font)
@@ -105,8 +106,14 @@ private struct MarqueeText: View {
             .fixedSize()
             .background(GeometryReader { geo in
                 Color.clear
-                    .onAppear { textWidth = geo.size.width }
-                    .onChange(of: text) { _, _ in textWidth = geo.size.width }
+                    .onAppear {
+                        textWidth = geo.size.width
+                        restart() // neu prüfen sobald Textbreite bekannt
+                    }
+                    .onChange(of: text) { _, _ in
+                        textWidth = geo.size.width
+                        restart()
+                    }
             })
             .offset(x: fits ? 0 : offset)
             .frame(maxWidth: .infinity, alignment: fits ? .center : .leading)
@@ -114,7 +121,7 @@ private struct MarqueeText: View {
             .background(GeometryReader { geo in
                 Color.clear.onAppear {
                     containerWidth = geo.size.width
-                    restart()
+                    restart() // neu prüfen sobald Containerbreite bekannt
                 }
             })
             .onChange(of: text) { _, _ in restart() }

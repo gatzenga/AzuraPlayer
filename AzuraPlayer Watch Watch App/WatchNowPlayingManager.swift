@@ -40,11 +40,9 @@ class WatchNowPlayingManager: ObservableObject {
     }
 
     func pause() {
-        // Live-Stream: Player zerstören, kein Hintergrund-Buffering
+        // Stream stoppen, aber Metadaten-Polling läuft weiter → Song wechselt auch bei Pause
         player?.pause()
         player = nil
-        pollTask?.cancel()
-        pollTask = nil
         isPlaying = false
     }
 
