@@ -50,7 +50,7 @@ struct AddEditStationView: View {
                         }
                 }
 
-                Section("Cover") {
+                Section(tr("Cover", "Cover", lang)) {
                     Toggle(tr("Show song cover (instead of station image)", "Song-Cover anzeigen (statt Senderbild)", lang), isOn: $showSongArt)
 
                     PhotosPicker(

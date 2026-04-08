@@ -78,7 +78,7 @@ struct PlayerView: View {
                         .background(Color.orange.opacity(0.1))
                         .clipShape(Capsule())
                 } else if player.isPlaying {
-                    Label("Live", systemImage: "antenna.radiowaves.left.and.right")
+                    Label(tr("Live", "Live", lang), systemImage: "antenna.radiowaves.left.and.right")
                         .font(.caption)
                         .foregroundStyle(.green)
                         .padding(.horizontal, 8)

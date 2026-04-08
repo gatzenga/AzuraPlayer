@@ -15,11 +15,28 @@ struct StationListView: View {
         NavigationStack {
             List {
                 ForEach(store.stations) { station in
-                    StationRowView(
-                        station: station,
-                        isPlaying: player.currentStation?.id == station.id && player.isPlaying,
-                        isBuffering: player.currentStation?.id == station.id && player.isBuffering
-                    )
+                    HStack(spacing: 0) {
+                        StationRowView(
+                            station: station,
+                            isPlaying: player.currentStation?.id == station.id && player.isPlaying,
+                            isBuffering: player.currentStation?.id == station.id && player.isBuffering
+                        )
+
+                        // Lösch-Button erscheint nur im Bearbeitungsmodus
+                        if isReordering {
+                            Button {
+                                stationToDelete = station
+                            } label: {
+                                Image(systemName: "trash.fill")
+                                    .font(.body)
+                                    .foregroundStyle(.white)
+                                    .padding(9)
+                                    .background(.red, in: Circle())
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.trailing, 4)
+                        }
+                    }
                     .contentShape(Rectangle())
                     .onTapGesture {
                         guard !isReordering else { return }
@@ -27,13 +44,6 @@ struct StationListView: View {
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         if !isReordering {
-                            Button(role: .destructive) {
-                                stationToDelete = station
-                            } label: {
-                                Label(tr("Delete", "Löschen", lang), systemImage: "trash")
-                            }
-                            .tint(.red)
-
                             Button {
                                 editingStation = station
                             } label: {

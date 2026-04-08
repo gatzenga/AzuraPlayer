@@ -29,7 +29,7 @@ class MetadataService: ObservableObject {
 
         Task { await fetchNowPlaying() }
 
-        timer = Timer.publish(every: 5, on: .main, in: .common)
+        timer = Timer.publish(every: 3, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
                 Task { await self?.fetchNowPlaying() }
@@ -70,6 +70,13 @@ class MetadataService: ObservableObject {
             if let newSong = response.nowPlaying?.song {
                 if currentTrack?.title != newSong.title || currentTrack?.artist != newSong.artist {
                     currentTrack = newSong
+                    // Song hat gewechselt → in Wiedergabeverlauf speichern
+                    let artURL = newSong.art ?? stationArtURL
+                    PlaybackHistoryStore.shared.addEntry(
+                        song: newSong,
+                        stationName: response.station.name,
+                        artworkURL: artURL
+                    )
                 }
             }
 

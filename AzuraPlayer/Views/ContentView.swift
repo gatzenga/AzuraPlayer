@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var showPlayer = false
     @AppStorage("isDarkModeEnabled") private var isDarkModeEnabled = false
     @AppStorage("themeColor") private var themeColorName = "blue"
+    @AppStorage("appLanguage") private var lang = "en"
 
     private var accentColor: Color { AppTheme.color(for: themeColorName) }
 
@@ -21,9 +22,13 @@ struct ContentView: View {
                     .tabItem { Label("Home", systemImage: "house.fill") }
                     .tag(0)
 
+                PlaybackHistoryView()
+                    .tabItem { Label(tr("History", "Verlauf", lang), systemImage: "clock.fill") }
+                    .tag(1)
+
                 SettingsView()
                     .tabItem { Label("Settings", systemImage: "gearshape.fill") }
-                    .tag(1)
+                    .tag(2)
             }
             .tint(accentColor)
             .preferredColorScheme(isDarkModeEnabled ? .dark : .light)
