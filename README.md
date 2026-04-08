@@ -10,5 +10,6 @@ AzuraPlayer is an app for streaming your self-hosted AzuraCast radio stations.
 - Dark Mode support
 - Sleep Timer
 - AzuraPlayer is an unofficial app and is not affiliated with or endorsed by the AzuraCast developers.
+- Export and import of stations via JSON
 
 This is my first iOS app. I work in IT, but not as a software developer, so I used Claude (AI) as a support tool throughout the development process. I want to be transparent about that.
