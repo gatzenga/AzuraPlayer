@@ -16,10 +16,10 @@ This is my first iOS app. I work in IT, but not as a software developer, so I us
 
 <table>
   <tr>
-    <td><img src="Screenshots/homepage.jpg" width="220"/></td>
-    <td><img src="Screenshots/history.jpg" width="220"/></td>
-    <td><img src="Screenshots/player.jpg" width="220"/></td>
-    <td><img src="Screenshots/lockscreen.jpg" width="220"/></td>
+    <td><img src="Screenshots/homepage.png" width="220"/></td>
+    <td><img src="Screenshots/history.png" width="220"/></td>
+    <td><img src="Screenshots/player.png" width="220"/></td>
+    <td><img src="Screenshots/lockscreen.png" width="220"/></td>
   </tr>
 </table>
 
