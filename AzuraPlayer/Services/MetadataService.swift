@@ -3,6 +3,7 @@ import Combine
 
 class MetadataService: ObservableObject {
     static let shared = MetadataService()
+    private static let decoder = JSONDecoder()
 
     @Published var currentTrack: SongInfo?
     @Published var stationName: String?
@@ -50,7 +51,7 @@ class MetadataService: ObservableObject {
             var request = URLRequest(url: url)
             request.cachePolicy = .reloadIgnoringLocalCacheData
             let (data, _) = try await URLSession.shared.data(for: request)
-            let response = try JSONDecoder().decode(NowPlayingResponse.self, from: data)
+            let response = try MetadataService.decoder.decode(NowPlayingResponse.self, from: data)
 
             stationName = response.station.name
             isOnline = response.isOnline ?? true

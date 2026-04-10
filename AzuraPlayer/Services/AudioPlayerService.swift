@@ -66,7 +66,9 @@ class AudioPlayerService: ObservableObject {
                 options: [.allowAirPlay, .allowBluetoothHFP]
             )
             try AVAudioSession.sharedInstance().setActive(true)
-        } catch {}
+        } catch {
+            print("[AudioPlayerService] Failed to configure audio session: \(error)")
+        }
     }
 
     func play(station: RadioStation) {
@@ -158,7 +160,8 @@ class AudioPlayerService: ObservableObject {
 
     private func setPlaceholderNowPlayingInfo(for station: RadioStation) {
         var info = [String: Any]()
-        info[MPMediaItemPropertyTitle] = "Wird geladen..."
+        let lang = UserDefaults.standard.string(forKey: "appLanguage") ?? "en"
+        info[MPMediaItemPropertyTitle] = tr("Loading...", "Wird geladen...", lang)
         info[MPMediaItemPropertyArtist] = station.displayName
         info[MPNowPlayingInfoPropertyIsLiveStream] = true
         info[MPNowPlayingInfoPropertyPlaybackRate] = 1.0
@@ -204,6 +207,8 @@ class AudioPlayerService: ObservableObject {
 
     func stop() {
         player?.pause()
+        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemFailedToPlayToEndTime, object: playerItem)
+        NotificationCenter.default.removeObserver(self, name: AVPlayerItem.playbackStalledNotification, object: playerItem)
         player = nil
         playerItem = nil
         statusObserver?.invalidate()
@@ -212,6 +217,7 @@ class AudioPlayerService: ObservableObject {
         timeControlObserver = nil
         isPlaying = false
         isBuffering = false
+        currentBitrate = nil
         stopMetadataTimer()
         stopReconnectTimer()
         cancelSleepTimer()
@@ -225,8 +231,8 @@ class AudioPlayerService: ObservableObject {
         sleepTimerEnd = Date().addingTimeInterval(TimeInterval(minutes * 60))
         sleepCountdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self, let end = self.sleepTimerEnd else { return }
-            DispatchQueue.main.async {
-                if Date() >= end { self.stop() }
+            DispatchQueue.main.async { [weak self] in
+                if Date() >= end { self?.stop() }
             }
         }
     }

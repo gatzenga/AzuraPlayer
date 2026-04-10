@@ -86,10 +86,14 @@ private struct PlaybackEntryRow: View {
 
     @AppStorage("appLanguage") private var lang = "en"
 
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm"
+        return f
+    }()
+
     private var timeString: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        return formatter.string(from: entry.timestamp)
+        PlaybackEntryRow.timeFormatter.string(from: entry.timestamp)
     }
 
     var body: some View {
@@ -186,11 +190,15 @@ struct PlaybackEntryDetailView: View {
 
     private var accentColor: Color { AppTheme.color(for: themeColorName) }
 
+    private static let dateTimeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        f.timeStyle = .short
+        return f
+    }()
+
     private var dateTimeString: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: entry.timestamp)
+        PlaybackEntryDetailView.dateTimeFormatter.string(from: entry.timestamp)
     }
 
     var body: some View {

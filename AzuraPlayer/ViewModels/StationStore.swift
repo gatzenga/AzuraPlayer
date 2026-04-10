@@ -6,6 +6,7 @@ class StationStore: ObservableObject {
     @Published var stations: [RadioStation] = []
 
     private let saveKey = "saved_stations"
+    private static let decoder = JSONDecoder()
 
     init() {
         load()
@@ -67,14 +68,16 @@ class StationStore: ObservableObject {
         Task {
             do {
                 let (data, _) = try await URLSession.shared.data(from: url)
-                let response = try JSONDecoder().decode(NowPlayingResponse.self, from: data)
+                let response = try StationStore.decoder.decode(NowPlayingResponse.self, from: data)
                 await MainActor.run {
                     if let idx = self.stations.firstIndex(where: { $0.id == station.id }) {
                         self.stations[idx].fetchedStationName = response.station.name
                         self.save()
                     }
                 }
-            } catch {}
+            } catch {
+                print("[StationStore] fetchStationName failed for \(station.apiURL): \(error)")
+            }
         }
     }
 

@@ -3,7 +3,6 @@ import SwiftUI
 struct StationRowView: View {
     let station: RadioStation
     let isPlaying: Bool
-    let isBuffering: Bool
 
     @AppStorage("themeColor") private var themeColorName = "blue"
     private var accentColor: Color { AppTheme.color(for: themeColorName) }

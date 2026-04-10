@@ -18,8 +18,7 @@ struct StationListView: View {
                     HStack(spacing: 0) {
                         StationRowView(
                             station: station,
-                            isPlaying: player.currentStation?.id == station.id && player.isPlaying,
-                            isBuffering: player.currentStation?.id == station.id && player.isBuffering
+                            isPlaying: player.currentStation?.id == station.id && player.isPlaying
                         )
 
                         if isReordering {

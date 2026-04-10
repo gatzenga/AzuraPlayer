@@ -11,9 +11,9 @@ struct SettingsView: View {
     @State private var exportURL: URL?
     @State private var showImporter = false
     @State private var pendingImport: [RadioStation]?
-    @State private var showImportConfirm = false
     @State private var importErrorMessage: String?
     @State private var showImportError = false
+    @State private var showExportError = false
 
     private var accentColor: Color { AppTheme.color(for: themeColorName) }
 
@@ -34,7 +34,7 @@ struct SettingsView: View {
                         Text("English").tag("en")
                         Text("Deutsch").tag("de")
                     }
-                    .id(lang)
+                    .id(lang + themeColorName)
 
                     Picker(tr("Accent Color", "Akzentfarbe", lang), selection: $themeColorName) {
                         ForEach(AppTheme.options, id: \.name) { option in
@@ -79,11 +79,12 @@ struct SettingsView: View {
                 }
 
                 Section(tr("Links & Contact", "Links & Kontakt", lang)) {
-                    if let url = URL(string: "https://github.com/GatzeStreicheln/AzuraPlayer") {
+                    if let url = URL(string: "https://github.com/gatzenga/AzuraPlayer") {
                         Link(destination: url) {
                             HStack {
                                 Image(systemName: "chevron.left.forwardslash.chevron.right")
                                     .foregroundStyle(.secondary)
+                                    .frame(width: 24)
                                 Text("GitHub")
                                 Spacer()
                                 Image(systemName: "arrow.up.right")
@@ -92,11 +93,12 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    if let url = URL(string: "https://gatzestreicheln.github.io/AzuraPlayer/privacy.html") {
+                    if let url = URL(string: "https://gatzenga.github.io/AzuraPlayer/privacy.html") {
                         Link(destination: url) {
                             HStack {
                                 Image(systemName: "hand.raised")
                                     .foregroundStyle(.secondary)
+                                    .frame(width: 24)
                                 Text(tr("Privacy Policy", "Datenschutz", lang))
                                 Spacer()
                                 Image(systemName: "arrow.up.right")
@@ -110,6 +112,7 @@ struct SettingsView: View {
                             HStack {
                                 Image(systemName: "envelope")
                                     .foregroundStyle(.secondary)
+                                    .frame(width: 24)
                                 Text(tr("Contact", "Kontakt", lang))
                                 Spacer()
                                 Image(systemName: "arrow.up.right")
@@ -181,6 +184,9 @@ struct SettingsView: View {
             } message: {
                 Text(importErrorMessage ?? "")
             }
+            .alert(tr("Export failed", "Export fehlgeschlagen", lang), isPresented: $showExportError) {
+                Button("OK", role: .cancel) {}
+            }
         }
     }
 
@@ -194,7 +200,10 @@ struct SettingsView: View {
                 .appendingPathExtension("json")
             try data.write(to: url)
             exportURL = url
-        } catch {}
+        } catch {
+            print("[SettingsView] Export failed: \(error)")
+            showExportError = true
+        }
     }
 
     // MARK: - Import
