@@ -76,8 +76,7 @@ struct PlayerView: View {
                         .background(Color.orange.opacity(0.1))
                         .clipShape(Capsule())
                 } else if player.isPlaying {
-                    let bitrateLabel = player.currentBitrate.map { " · \($0) kbps" } ?? ""
-                    Label("Live\(bitrateLabel)", systemImage: "antenna.radiowaves.left.and.right")
+                    Label("Live", systemImage: "antenna.radiowaves.left.and.right")
                         .font(.caption)
                         .foregroundStyle(.green)
                         .padding(.horizontal, 8)

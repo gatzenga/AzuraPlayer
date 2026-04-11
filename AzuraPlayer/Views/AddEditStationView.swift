@@ -5,12 +5,13 @@ struct AddEditStationView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var store: StationStore
     @AppStorage("appLanguage") private var lang = "en"
+    @AppStorage("themeColor") private var themeColorName = "blue"
+    private var accentColor: Color { AppTheme.color(for: themeColorName) }
 
     var editStation: RadioStation?
 
     @State private var customName: String = ""
     @State private var streamURL: String = ""
-    @State private var urlScheme: String = "https"
     @State private var apiURL: String = ""
     @State private var showSongArt: Bool = false
     @State private var autoFillAPI: Bool = false
@@ -24,7 +25,7 @@ struct AddEditStationView: View {
                 if streamURL.hasPrefix("http://") { return String(streamURL.dropFirst(7)) }
                 return streamURL
             },
-            set: { streamURL = "\(urlScheme)://\($0)" }
+            set: { streamURL = "https://\($0)" }
         )
     }
 
@@ -38,29 +39,14 @@ struct AddEditStationView: View {
                         .autocorrectionDisabled()
 
                     HStack(spacing: 8) {
-                        Menu {
-                            Button("https") { urlScheme = "https" }
-                            Button("http")  { urlScheme = "http"  }
-                        } label: {
-                            HStack(spacing: 3) {
-                                Spacer(minLength: 0)
-                                Text(urlScheme)
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundStyle(.primary)
-                                Image(systemName: "chevron.up.chevron.down")
-                                    .font(.system(size: 9, weight: .semibold))
-                                    .foregroundStyle(.secondary)
-                                Spacer(minLength: 0)
-                            }
-                            .frame(width: 72, height: 34)
-                            .contentShape(Rectangle())
-                        }
-                        .background(Color(.tertiarySystemFill))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                        .onChange(of: urlScheme) { _, newScheme in
-                            streamURL = "\(newScheme)://\(urlPathBinding.wrappedValue)"
-                        }
-                        TextField(tr("your-domain.com/hls/…", "ihre-domain.com/hls/…", lang), text: urlPathBinding)
+                        Text("https://")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(accentColor)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 8)
+                            .background(Color(.tertiarySystemFill))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                        TextField(tr("your-domain.com (HLS recommended)", "ihre-domain.com (HLS empfohlen)", lang), text: urlPathBinding)
                             .keyboardType(.URL)
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.never)
@@ -122,13 +108,29 @@ struct AddEditStationView: View {
 
                 Section {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("💡 AzuraCast API-Format:")
+                        Text("AzuraCast API-Format:")
                             .font(.caption).bold()
                         Text(verbatim: "https://your-domain.com/api/nowplaying/station_shortcode")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .textSelection(.disabled)
-                        Text(tr("Supported formats: HLS, MP3, AAC", "Unterstützte Formate: HLS, MP3, AAC", lang))
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(tr("Supported formats", "Unterstützte Formate", lang))
+                            .font(.caption).bold()
+                        Text("HLS, MP3, AAC")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(tr("Why HTTPS only?", "Warum nur HTTPS?", lang))
+                            .font(.caption).bold()
+                        Text(tr(
+                            "HTTP streams are not reliably supported due to protocol incompatibilities (e.g. ICY/Icecast). HTTPS ensures stable playback for both public stations and AzuraCast.",
+                            "HTTP-Streams sind aufgrund von Protokoll-Inkompatibilitäten (z. B. ICY/Icecast) nicht zuverlässig. HTTPS gewährleistet stabiles Abspielen – sowohl bei öffentlichen Sendern als auch bei AzuraCast.",
+                            lang))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -151,7 +153,7 @@ struct AddEditStationView: View {
                     } label: {
                         Image(systemName: "checkmark")
                     }
-                    .disabled(streamURL.isEmpty || apiURL.isEmpty)
+                    .disabled(streamURL.isEmpty)
                 }
             }
             .onChange(of: selectedPhoto) { _, new in
@@ -188,7 +190,6 @@ struct AddEditStationView: View {
         guard let s = editStation else { return }
         customName = s.customName ?? ""
         streamURL = s.streamURL
-        urlScheme = s.streamURL.hasPrefix("http://") ? "http" : "https"
         apiURL = s.apiURL
         showSongArt = s.showSongArt
         autoFillAPI = s.autoFillAPI
