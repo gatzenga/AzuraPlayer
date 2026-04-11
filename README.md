@@ -6,6 +6,7 @@ AzuraPlayer is an app for streaming your self-hosted AzuraCast radio stations.
 
 **Features:**
 - Add multiple AzuraCast stations
+- Support for other radio stream links
 - Play live streams directly in the app
 - Display the currently playing song with title and artist
 - Show album artwork of the current song
