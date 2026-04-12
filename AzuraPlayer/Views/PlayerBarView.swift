@@ -75,6 +75,7 @@ struct PlayerBarView: View {
                     .background(accentColor)
                     .clipShape(Circle())
             }
+            .buttonStyle(.plain)
 
             Button {
                 player.stop()
@@ -84,6 +85,7 @@ struct PlayerBarView: View {
                     .foregroundStyle(accentColor)
                     .frame(width: 36, height: 36)
             }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
