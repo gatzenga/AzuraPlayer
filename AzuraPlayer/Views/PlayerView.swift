@@ -20,6 +20,9 @@ struct PlayerView: View {
     private var controlButtonSize: CGFloat { isRegularWidth ? 65 : 50 }
     private var horizontalPadding: CGFloat { isRegularWidth ? 80 : 60 }
     private var bottomPadding: CGFloat { isRegularWidth ? 60 : 50 }
+    private func controlRowPadding(availableWidth: CGFloat) -> CGFloat {
+        min(horizontalPadding, max(16, (availableWidth - 3 * controlButtonSize) / 4))
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -38,6 +41,7 @@ struct PlayerView: View {
                         .background(Color.gray.opacity(colorScheme == .dark ? 0.3 : 0.1))
                         .clipShape(Circle())
                 }
+                .buttonStyle(.plain)
             }
             .padding(.top, 10)
             .padding(.bottom, 8)
@@ -132,41 +136,46 @@ struct PlayerView: View {
                 }
                 .shadow(color: accentColor.opacity(0.4), radius: 10, y: 5)
             }
+            .buttonStyle(.plain)
             .padding(.bottom, isRegularWidth ? 55 : 32)
 
             // AirPlay | Sleep Timer | Stop
-            HStack {
-                ZStack {
-                    Circle()
-                        .fill(player.isAirPlayActive
-                              ? accentColor.opacity(0.2)
-                              : Color.gray.opacity(colorScheme == .dark ? 0.3 : 0.15))
-                        .frame(width: controlButtonSize, height: controlButtonSize)
-                    AirPlayButton(tintColor: UIColor(accentColor), activeTintColor: UIColor(accentColor))
-                        .frame(width: isRegularWidth ? 36 : 28, height: isRegularWidth ? 36 : 28)
-                }
-
-                Spacer()
-
-                sleepTimerButton
-
-                Spacer()
-
-                Button {
-                    player.stop()
-                    dismiss()
-                } label: {
+            GeometryReader { geo in
+                HStack {
                     ZStack {
                         Circle()
-                            .fill(Color.gray.opacity(colorScheme == .dark ? 0.3 : 0.15))
+                            .fill(player.isAirPlayActive
+                                  ? accentColor.opacity(0.2)
+                                  : Color.gray.opacity(colorScheme == .dark ? 0.3 : 0.15))
                             .frame(width: controlButtonSize, height: controlButtonSize)
-                        Image(systemName: "stop.fill")
-                            .font(.system(size: isRegularWidth ? 26 : 20))
-                            .foregroundStyle(accentColor)
+                        AirPlayButton(tintColor: UIColor(accentColor), activeTintColor: UIColor(accentColor))
+                            .frame(width: isRegularWidth ? 36 : 28, height: isRegularWidth ? 36 : 28)
                     }
+
+                    Spacer()
+
+                    sleepTimerButton
+
+                    Spacer()
+
+                    Button {
+                        player.stop()
+                        dismiss()
+                    } label: {
+                        ZStack {
+                            Circle()
+                                .fill(Color.gray.opacity(colorScheme == .dark ? 0.3 : 0.15))
+                                .frame(width: controlButtonSize, height: controlButtonSize)
+                            Image(systemName: "stop.fill")
+                                .font(.system(size: isRegularWidth ? 26 : 20))
+                                .foregroundStyle(accentColor)
+                        }
+                    }
+                    .buttonStyle(.plain)
                 }
+                .padding(.horizontal, controlRowPadding(availableWidth: geo.size.width))
             }
-            .padding(.horizontal, horizontalPadding)
+            .frame(height: controlButtonSize)
             .padding(.bottom, bottomPadding)
         }
         .background(Color(UIColor.systemBackground))
@@ -219,6 +228,7 @@ struct PlayerView: View {
                 }
             }
         }
+        .buttonStyle(.plain)
     }
 
     private var placeholder: some View {

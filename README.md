@@ -2,7 +2,7 @@
   <img src="AzuraPlayer/Assets.xcassets/AppIcon.appiconset/dark.png" width="150" alt="App Logo"/>
 </p>
 
-AzuraPlayer lets you stream your self-hosted AzuraCast stations – or any other radio stream – right from your iPhone.
+AzuraPlayer lets you stream your self-hosted AzuraCast stations – or any other radio stream – right from your iPhone or iPad.
 
 **Features:**
 - Add multiple AzuraCast stations
@@ -22,12 +22,25 @@ This is my first iOS app. I work in IT, but not as a software developer, so I us
 
 https://testflight.apple.com/join/nFmb5g4Q
 
+### iPhone
+
 <table>
   <tr>
-    <td><img src="Screenshots/homepage.png" width="220"/></td>
-    <td><img src="Screenshots/history.png" width="220"/></td>
-    <td><img src="Screenshots/player.png" width="220"/></td>
-    <td><img src="Screenshots/lockscreen.png" width="220"/></td>
+    <td><img src="Screenshots_iPhone/homepage.png" width="220"/></td>
+    <td><img src="Screenshots_iPhone/history.png" width="220"/></td>
+    <td><img src="Screenshots_iPhone/player.png" width="220"/></td>
+    <td><img src="Screenshots_iPhone/lockscreen.png" width="220"/></td>
+  </tr>
+</table>
+
+### iPad
+
+<table>
+  <tr>
+    <td><img src="Screenshots_iPad/homepage.png" width="220"/></td>
+    <td><img src="Screenshots_iPad/history.png" width="220"/></td>
+    <td><img src="Screenshots_iPad/player.png" width="220"/></td>
+    <td><img src="Screenshots_iPad/lockscreen.png" width="220"/></td>
   </tr>
 </table>
 
