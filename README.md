@@ -29,7 +29,7 @@ https://testflight.apple.com/join/nFmb5g4Q
     <td><img src="Screenshots_iPhone/homepage.png" width="220"/></td>
     <td><img src="Screenshots_iPhone/history.png" width="220"/></td>
     <td><img src="Screenshots_iPhone/player.png" width="220"/></td>
-    <td><img src="Screenshots_iPhone/lockscreen.png" width="220"/></td>
+    <td><img src="Screenshots_iPhone/sleep_timer.png" width="220"/></td>
   </tr>
 </table>
 
@@ -40,7 +40,7 @@ https://testflight.apple.com/join/nFmb5g4Q
     <td><img src="Screenshots_iPad/homepage.png" width="220"/></td>
     <td><img src="Screenshots_iPad/history.png" width="220"/></td>
     <td><img src="Screenshots_iPad/player.png" width="220"/></td>
-    <td><img src="Screenshots_iPad/lockscreen.png" width="220"/></td>
+    <td><img src="Screenshots_iPad/sleep_timer.png" width="220"/></td>
   </tr>
 </table>
 
