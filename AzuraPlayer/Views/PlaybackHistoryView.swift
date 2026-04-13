@@ -203,79 +203,80 @@ struct PlaybackEntryDetailView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 28) {
+            VStack(spacing: 12) {
 
-                    // Artwork
-                    Group {
-                        if let urlString = entry.artworkURL, let url = URL(string: urlString) {
-                            AsyncImage(url: url) { phase in
-                                switch phase {
-                                case .success(let image):
-                                    image.resizable().scaledToFill()
-                                default:
-                                    artworkPlaceholder
-                                }
+                // Artwork
+                Group {
+                    if let urlString = entry.artworkURL, let url = URL(string: urlString) {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image.resizable().scaledToFill()
+                            default:
+                                artworkPlaceholder
                             }
-                        } else {
-                            artworkPlaceholder
                         }
+                    } else {
+                        artworkPlaceholder
                     }
-                    .frame(width: 200, height: 200)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 4)
-                    .padding(.top, 16)
+                }
+                .frame(width: 160, height: 160)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 4)
+                .padding(.top, 12)
 
-                    // Song-Info
-                    VStack(spacing: 10) {
-                        if !entry.artist.isEmpty {
-                            Text(entry.artist)
-                                .font(.title2.bold())
-                                .multilineTextAlignment(.center)
-                        }
-
-                        Text(entry.songTitle)
-                            .font(.title3)
+                // Song-Info
+                VStack(spacing: 6) {
+                    if !entry.artist.isEmpty {
+                        Text(entry.artist)
+                            .font(.title3.bold())
                             .multilineTextAlignment(.center)
-                            .foregroundStyle(entry.artist.isEmpty ? .primary : .secondary)
-
-                        Text(entry.stationName)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(accentColor)
-                            .padding(.top, 4)
-
-                        Text(dateTimeString)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                     }
-                    .padding(.horizontal, 24)
 
-                    Divider()
-                        .padding(.horizontal, 32)
+                    Text(entry.songTitle)
+                        .font(.body)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(entry.artist.isEmpty ? .primary : .secondary)
 
-                    // Kopier-Buttons
-                    VStack(spacing: 12) {
+                    Text(entry.stationName)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(accentColor)
+                        .padding(.top, 2)
+
+                    Text(dateTimeString)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 16)
+
+                Divider()
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+
+                // Kopier-Buttons
+                VStack(spacing: 8) {
+                    CopyButton(
+                        label: tr("Copy Title", "Titel kopieren", lang),
+                        icon: "music.note",
+                        value: entry.songTitle,
+                        accentColor: accentColor
+                    )
+
+                    if !entry.artist.isEmpty {
                         CopyButton(
-                            label: tr("Copy Title", "Titel kopieren", lang),
-                            icon: "music.note",
-                            value: entry.songTitle,
+                            label: tr("Copy Artist", "Künstler kopieren", lang),
+                            icon: "person.fill",
+                            value: entry.artist,
                             accentColor: accentColor
                         )
-
-                        if !entry.artist.isEmpty {
-                            CopyButton(
-                                label: tr("Copy Artist", "Künstler kopieren", lang),
-                                icon: "person.fill",
-                                value: entry.artist,
-                                accentColor: accentColor
-                            )
-                        }
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 32)
                 }
-                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
+
+                Spacer()
             }
+            .frame(maxWidth: .infinity)
             .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -330,7 +331,7 @@ private struct CopyButton: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(copied ? accentColor.opacity(0.15) : Color(UIColor.secondarySystemGroupedBackground))
             )
-            .foregroundStyle(copied ? accentColor : .primary)
+            .foregroundStyle(accentColor)
         }
         .buttonStyle(.plain)
         .animation(.easeInOut(duration: 0.2), value: copied)

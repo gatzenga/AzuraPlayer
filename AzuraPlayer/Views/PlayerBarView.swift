@@ -34,27 +34,27 @@ struct PlayerBarView: View {
             .frame(width: 48, height: 48)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .shadow(color: .black.opacity(0.1), radius: 2, y: 1)
+            .overlay(alignment: .bottomTrailing) {
+                if player.isBuffering || player.isPlaying {
+                    Circle()
+                        .fill(player.isBuffering ? Color.orange : Color.green)
+                        .frame(width: 12, height: 12)
+                        .overlay(Circle().stroke(Color(UIColor.systemBackground), lineWidth: 2))
+                        .offset(x: 3, y: 3)
+                }
+            }
 
             VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    if player.isBuffering {
-                        Text(tr("Connecting...", "Verbinde...", lang))
-                            .font(.subheadline).bold()
-                            .foregroundStyle(.orange)
-                    } else if player.isPlaying {
-                        Image(systemName: "antenna.radiowaves.left.and.right")
-                            .font(.caption2)
-                            .foregroundStyle(.green)
-                        Text(metadata.currentTrack?.title ?? tr("Live Stream", "Live Stream", lang))
-                            .font(.subheadline).bold()
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                    } else {
-                        Text(metadata.currentTrack?.title ?? tr("Paused", "Pausiert", lang))
-                            .font(.subheadline).bold()
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                    }
+                if player.isBuffering {
+                    Text(tr("Connecting...", "Verbinde...", lang))
+                        .font(.subheadline).bold()
+                        .foregroundStyle(.orange)
+                        .lineLimit(1)
+                } else {
+                    Text(metadata.currentTrack?.title ?? (player.isPlaying ? tr("Live Stream", "Live Stream", lang) : tr("Paused", "Pausiert", lang)))
+                        .font(.subheadline).bold()
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
                 }
 
                 Text(metadata.currentTrack?.artist ?? player.currentStation?.displayName ?? "")

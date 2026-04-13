@@ -3,6 +3,7 @@ import PhotosUI
 
 struct AddEditStationView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var hSize
     @ObservedObject var store: StationStore
     @AppStorage("appLanguage") private var lang = "en"
     @AppStorage("themeColor") private var themeColorName = "blue"
@@ -46,7 +47,7 @@ struct AddEditStationView: View {
                             .padding(.vertical, 8)
                             .background(Color(.tertiarySystemFill))
                             .clipShape(RoundedRectangle(cornerRadius: 8))
-                        TextField(tr("your-domain.com (HLS recommended)", "ihre-domain.com (HLS empfohlen)", lang), text: urlPathBinding)
+                        TextField(tr("(HLS recommended)", "(HLS empfohlen)", lang), text: urlPathBinding)
                             .keyboardType(.URL)
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.never)
@@ -86,15 +87,16 @@ struct AddEditStationView: View {
                                 Image(uiImage: img)
                                     .resizable()
                                     .scaledToFill()
-                                    .frame(width: 60, height: 60)
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    .frame(width: 50, height: 50)
+                                    .clipShape(RoundedRectangle(cornerRadius: 6))
                             } else {
                                 Image(systemName: "photo.badge.plus")
-                                    .font(.title2)
+                                    .font(.body)
                             }
                             Text(customImageData == nil
                                  ? tr("Choose custom cover", "Custom Cover wählen", lang)
                                  : tr("Change cover", "Cover ändern", lang))
+                                .font(.callout)
                         }
                     }
 
@@ -107,33 +109,42 @@ struct AddEditStationView: View {
                 }
 
                 Section {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("AzuraCast API-Format:")
-                            .font(.caption).bold()
-                        Text(verbatim: "https://your-domain.com/api/nowplaying/station_shortcode")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .textSelection(.disabled)
-                    }
+                    VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(tr("AzuraCast API format:", "AzuraCast API-Format:", lang))
+                                .font(.caption.bold())
+                                .foregroundStyle(.primary)
+                            Text(verbatim: "https://your-domain.com/api/nowplaying/station_shortcode")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(tr("Supported formats", "Unterstützte Formate", lang))
-                            .font(.caption).bold()
-                        Text("HLS, MP3, AAC")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+                        Divider()
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(tr("Why HTTPS only?", "Warum nur HTTPS?", lang))
-                            .font(.caption).bold()
-                        Text(tr(
-                            "HTTP streams are not reliably supported due to protocol incompatibilities (e.g. ICY/Icecast). HTTPS ensures stable playback for both public stations and AzuraCast.",
-                            "HTTP-Streams sind aufgrund von Protokoll-Inkompatibilitäten (z. B. ICY/Icecast) nicht zuverlässig. HTTPS gewährleistet stabiles Abspielen – sowohl bei öffentlichen Sendern als auch bei AzuraCast.",
-                            lang))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(tr("Supported formats", "Unterstützte Formate", lang))
+                                .font(.caption.bold())
+                                .foregroundStyle(.primary)
+                            Text("HLS, MP3, AAC")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Divider()
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(tr("Why HTTPS only?", "Warum nur HTTPS?", lang))
+                                .font(.caption.bold())
+                                .foregroundStyle(.primary)
+                            Text(tr(
+                                "HTTP streams are not reliably supported due to protocol incompatibilities (e.g. ICY/Icecast). HTTPS ensures stable playback for both public stations and AzuraCast.",
+                                "HTTP-Streams werden aufgrund von Protokoll-Inkompatibilitäten (z.B. ICY/Icecast) nicht zuverlässig unterstützt. HTTPS gewährleistet stabile Wiedergabe für öffentliche Sender und AzuraCast.",
+                                lang))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
                     }
+                    .padding(.vertical, 4)
                 }
             }
             .navigationTitle(isEditing
@@ -164,12 +175,10 @@ struct AddEditStationView: View {
                 }
             }
             .onAppear { prefill() }
+            .frame(minHeight: hSize == .regular ? 620 : nil)
         }
     }
 
-    // Derives the AzuraCast API URL from a stream URL.
-    // Example: https://radio.example.com/listen/music → https://radio.example.com/api/nowplaying/music
-    // Example: https://radio.example.com/hls/music/live.m3u8 → https://radio.example.com/api/nowplaying/music
     private func derivedAPIURL(from streamURL: String) -> String? {
         guard let url = URL(string: streamURL),
               let scheme = url.scheme,
