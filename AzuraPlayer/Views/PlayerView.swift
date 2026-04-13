@@ -6,12 +6,20 @@ struct PlayerView: View {
     @ObservedObject var metadata = MetadataService.shared
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @AppStorage("appLanguage") private var lang = "en"
 
     @State private var showSleepTimerDialog = false
 
     @AppStorage("themeColor") private var themeColorName = "blue"
     private var accentColor: Color { AppTheme.color(for: themeColorName) }
+
+    private var isRegularWidth: Bool { horizontalSizeClass == .regular }
+    private var albumArtSize: CGFloat { isRegularWidth ? 400 : 290 }
+    private var playButtonSize: CGFloat { isRegularWidth ? 100 : 75 }
+    private var controlButtonSize: CGFloat { isRegularWidth ? 65 : 50 }
+    private var horizontalPadding: CGFloat { isRegularWidth ? 80 : 60 }
+    private var bottomPadding: CGFloat { isRegularWidth ? 60 : 50 }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -57,7 +65,7 @@ struct PlayerView: View {
                     placeholder
                 }
             }
-            .frame(width: 290, height: 290)
+            .frame(width: albumArtSize, height: albumArtSize)
             .clipShape(RoundedRectangle(cornerRadius: 24))
             .shadow(color: .black.opacity(0.5), radius: 30, y: 15)
             .padding(.bottom, 20)
@@ -82,6 +90,14 @@ struct PlayerView: View {
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .background(Color.green.opacity(0.1))
+                        .clipShape(Capsule())
+                } else {
+                    Label(tr("Paused", "Pausiert", lang), systemImage: "pause.fill")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.secondary.opacity(0.1))
                         .clipShape(Capsule())
                 }
 
@@ -109,14 +125,14 @@ struct PlayerView: View {
                 player.togglePlayPause()
             } label: {
                 ZStack {
-                    Circle().fill(accentColor).frame(width: 75, height: 75)
+                    Circle().fill(accentColor).frame(width: playButtonSize, height: playButtonSize)
                     Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 32))
+                        .font(.system(size: isRegularWidth ? 42 : 32))
                         .foregroundStyle(.white)
                 }
                 .shadow(color: accentColor.opacity(0.4), radius: 10, y: 5)
             }
-            .padding(.bottom, 32)
+            .padding(.bottom, isRegularWidth ? 55 : 32)
 
             // AirPlay | Sleep Timer | Stop
             HStack {
@@ -125,9 +141,9 @@ struct PlayerView: View {
                         .fill(player.isAirPlayActive
                               ? accentColor.opacity(0.2)
                               : Color.gray.opacity(colorScheme == .dark ? 0.3 : 0.15))
-                        .frame(width: 50, height: 50)
+                        .frame(width: controlButtonSize, height: controlButtonSize)
                     AirPlayButton(tintColor: UIColor(accentColor), activeTintColor: UIColor(accentColor))
-                        .frame(width: 28, height: 28)
+                        .frame(width: isRegularWidth ? 36 : 28, height: isRegularWidth ? 36 : 28)
                 }
 
                 Spacer()
@@ -143,18 +159,18 @@ struct PlayerView: View {
                     ZStack {
                         Circle()
                             .fill(Color.gray.opacity(colorScheme == .dark ? 0.3 : 0.15))
-                            .frame(width: 50, height: 50)
+                            .frame(width: controlButtonSize, height: controlButtonSize)
                         Image(systemName: "stop.fill")
-                            .font(.system(size: 20))
+                            .font(.system(size: isRegularWidth ? 26 : 20))
                             .foregroundStyle(accentColor)
                     }
                 }
             }
-            .padding(.horizontal, 60)
-            .padding(.bottom, 50)
+            .padding(.horizontal, horizontalPadding)
+            .padding(.bottom, bottomPadding)
         }
         .background(Color(UIColor.systemBackground))
-        .ignoresSafeArea()
+        .ignoresSafeArea(edges: .bottom)
         .onAppear { player.updateAirPlayState() }
         .confirmationDialog(
             tr("Sleep Timer", "Sleep Timer", lang),
@@ -186,19 +202,19 @@ struct PlayerView: View {
                     .fill(player.sleepTimerEnd != nil
                           ? accentColor.opacity(0.15)
                           : Color.gray.opacity(colorScheme == .dark ? 0.3 : 0.15))
-                    .frame(width: 50, height: 50)
+                    .frame(width: controlButtonSize, height: controlButtonSize)
                 if let end = player.sleepTimerEnd {
                     TimelineView(.periodic(from: .now, by: 1)) { _ in
                         let remaining = max(0, Int(end.timeIntervalSinceNow))
                         let mins = remaining / 60
                         let secs = remaining % 60
                         Text(String(format: "%d:%02d", mins, secs))
-                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                            .font(.system(size: isRegularWidth ? 13 : 11, weight: .semibold, design: .monospaced))
                             .foregroundStyle(accentColor)
                     }
                 } else {
                     Image(systemName: "moon.zzz.fill")
-                        .font(.system(size: 20))
+                        .font(.system(size: isRegularWidth ? 26 : 20))
                         .foregroundStyle(accentColor)
                 }
             }
