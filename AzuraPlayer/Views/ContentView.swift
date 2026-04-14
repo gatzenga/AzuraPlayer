@@ -7,12 +7,17 @@ struct ContentView: View {
 
     @State private var selectedTab = 0
     @State private var showPlayer = false
-    @AppStorage("isDarkModeEnabled") private var isDarkModeEnabled = false
+    @AppStorage("appAppearance") private var appAppearance = "system"
     @AppStorage("themeColor") private var themeColorName = "blue"
-    @AppStorage("appLanguage") private var lang = "en"
-
     private var accentColor: Color { AppTheme.color(for: themeColorName) }
     private var isRegularWidth: Bool { horizontalSizeClass == .regular }
+    private var preferredScheme: ColorScheme? {
+        switch appAppearance {
+        case "light": return .light
+        case "dark":  return .dark
+        default:      return nil
+        }
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -25,14 +30,14 @@ struct ContentView: View {
                         .tabItem { Label("Home", systemImage: "house.fill") }
                         .tag(0)
                     PlaybackHistoryView()
-                        .tabItem { Label(tr("History", "Verlauf", lang), systemImage: "clock.fill") }
+                        .tabItem { Label(tr("History", "Verlauf"), systemImage: "clock.fill") }
                         .tag(1)
                     SettingsView()
                         .tabItem { Label("Settings", systemImage: "gearshape.fill") }
                         .tag(2)
                 }
                 .tint(accentColor)
-                .preferredColorScheme(isDarkModeEnabled ? .dark : .light)
+                .preferredColorScheme(preferredScheme)
 
                 // iPhone: dynamisches Padding via GeometryReader (unverändert)
                 if player.currentStation != nil && !isRegularWidth {

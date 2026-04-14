@@ -2,8 +2,7 @@ import SwiftUI
 
 struct PlaybackHistoryView: View {
     @ObservedObject private var historyStore = PlaybackHistoryStore.shared
-    @AppStorage("isDarkModeEnabled") private var isDarkModeEnabled = false
-    @AppStorage("appLanguage") private var lang = "en"
+
     @AppStorage("themeColor") private var themeColorName = "blue"
     @State private var showDeleteConfirmation = false
     @State private var selectedEntry: PlaybackEntry? = nil
@@ -28,11 +27,11 @@ struct PlaybackHistoryView: View {
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
             .background(Color(UIColor.systemGroupedBackground))
-            .navigationTitle(tr("Playback History", "Wiedergabeverlauf", lang))
+            .navigationTitle(tr("Playback History", "Wiedergabeverlauf"))
             .toolbar {
                 if !historyStore.entries.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button(tr("Delete", "Löschen", lang)) {
+                        Button(tr("Delete", "Löschen")) {
                             showDeleteConfirmation = true
                         }
                         .foregroundStyle(.red)
@@ -40,29 +39,27 @@ struct PlaybackHistoryView: View {
                 }
             }
             .alert(
-                tr("Delete History?", "Verlauf löschen?", lang),
+                tr("Delete History?", "Verlauf löschen?"),
                 isPresented: $showDeleteConfirmation
             ) {
-                Button(tr("Delete All", "Alle löschen", lang), role: .destructive) {
+                Button(tr("Delete All", "Alle löschen"), role: .destructive) {
                     historyStore.clearAll()
                 }
-                Button(tr("Cancel", "Abbrechen", lang), role: .cancel) { }
+                Button(tr("Cancel", "Abbrechen"), role: .cancel) { }
             } message: {
                 Text(tr(
                     "This action cannot be undone.",
-                    "Diese Aktion kann nicht rückgängig gemacht werden.",
-                    lang
+                    "Diese Aktion kann nicht rückgängig gemacht werden."
                 ))
             }
             .overlay {
                 if historyStore.entries.isEmpty {
                     ContentUnavailableView(
-                        tr("No Entries Yet", "Noch keine Einträge", lang),
+                        tr("No Entries Yet", "Noch keine Einträge"),
                         systemImage: "music.note.list",
                         description: Text(tr(
                             "Songs will appear here once a stream is playing.",
-                            "Hier erscheinen Songs, sobald ein Stream läuft.",
-                            lang
+                            "Hier erscheinen Songs, sobald ein Stream läuft."
                         ))
                     )
                 }
@@ -70,9 +67,7 @@ struct PlaybackHistoryView: View {
             .sheet(item: $selectedEntry) { entry in
                 PlaybackEntryDetailView(entry: entry)
                     .tint(accentColor)
-                    .preferredColorScheme(isDarkModeEnabled ? .dark : .light)
             }
-            .preferredColorScheme(isDarkModeEnabled ? .dark : .light)
             .tint(accentColor)
         }
     }
@@ -84,7 +79,7 @@ private struct PlaybackEntryRow: View {
     let entry: PlaybackEntry
     let onShowFull: () -> Void
 
-    @AppStorage("appLanguage") private var lang = "en"
+
 
     private static let timeFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -148,7 +143,7 @@ private struct PlaybackEntryRow: View {
             Button {
                 onShowFull()
             } label: {
-                Label(tr("Show Full", "Vollständig anzeigen", lang), systemImage: "text.magnifyingglass")
+                Label(tr("Show Full", "Vollständig anzeigen"), systemImage: "text.magnifyingglass")
             }
 
             Divider()
@@ -156,14 +151,14 @@ private struct PlaybackEntryRow: View {
             Button {
                 UIPasteboard.general.string = entry.songTitle
             } label: {
-                Label(tr("Copy Title", "Titel kopieren", lang), systemImage: "music.note")
+                Label(tr("Copy Title", "Titel kopieren"), systemImage: "music.note")
             }
 
             if !entry.artist.isEmpty {
                 Button {
                     UIPasteboard.general.string = entry.artist
                 } label: {
-                    Label(tr("Copy Artist", "Künstler kopieren", lang), systemImage: "person.fill")
+                    Label(tr("Copy Artist", "Künstler kopieren"), systemImage: "person.fill")
                 }
             }
         }
@@ -185,7 +180,7 @@ struct PlaybackEntryDetailView: View {
     let entry: PlaybackEntry
 
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("appLanguage") private var lang = "en"
+
     @AppStorage("themeColor") private var themeColorName = "blue"
 
     private var accentColor: Color { AppTheme.color(for: themeColorName) }
@@ -256,7 +251,7 @@ struct PlaybackEntryDetailView: View {
                 // Kopier-Buttons
                 VStack(spacing: 8) {
                     CopyButton(
-                        label: tr("Copy Title", "Titel kopieren", lang),
+                        label: tr("Copy Title", "Titel kopieren"),
                         icon: "music.note",
                         value: entry.songTitle,
                         accentColor: accentColor
@@ -264,7 +259,7 @@ struct PlaybackEntryDetailView: View {
 
                     if !entry.artist.isEmpty {
                         CopyButton(
-                            label: tr("Copy Artist", "Künstler kopieren", lang),
+                            label: tr("Copy Artist", "Künstler kopieren"),
                             icon: "person.fill",
                             value: entry.artist,
                             accentColor: accentColor
@@ -281,7 +276,7 @@ struct PlaybackEntryDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(tr("Close", "Schließen", lang)) {
+                    Button(tr("Close", "Schließen")) {
                         dismiss()
                     }
                 }
@@ -308,7 +303,7 @@ private struct CopyButton: View {
     let value: String
     let accentColor: Color
 
-    @AppStorage("appLanguage") private var lang = "en"
+
     @State private var copied = false
 
     var body: some View {
@@ -322,7 +317,7 @@ private struct CopyButton: View {
             HStack {
                 Image(systemName: copied ? "checkmark" : icon)
                     .frame(width: 20)
-                Text(copied ? tr("Copied!", "Kopiert!", lang) : label)
+                Text(copied ? tr("Copied!", "Kopiert!") : label)
                 Spacer()
             }
             .padding(.horizontal, 16)

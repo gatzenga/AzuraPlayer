@@ -3,7 +3,6 @@ import SwiftUI
 struct StationListView: View {
     @EnvironmentObject var store: StationStore
     @EnvironmentObject var player: AudioPlayerService
-    @AppStorage("appLanguage") private var lang = "en"
     @AppStorage("themeColor") private var themeColorName = "blue"
 
     @State private var isReordering = false
@@ -45,7 +44,7 @@ struct StationListView: View {
                             Button {
                                 editingStation = station
                             } label: {
-                                Label(tr("Edit", "Bearbeiten", lang), systemImage: "pencil")
+                                Label(tr("Edit", "Bearbeiten"), systemImage: "pencil")
                             }
                             .tint(AppTheme.color(for: themeColorName))
                         }
@@ -66,7 +65,7 @@ struct StationListView: View {
             .scrollContentBackground(.hidden)
             .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
             .environment(\.editMode, .constant(isReordering ? .active : .inactive))
-            .navigationTitle(tr("Stations", "Sender", lang))
+            .navigationTitle(tr("Stations", "Sender"))
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     if isReordering {
@@ -79,7 +78,7 @@ struct StationListView: View {
                         Button {
                             withAnimation { isReordering = true }
                         } label: {
-                            Text(tr("Edit", "Bearbeiten", lang))
+                            Text(tr("Edit", "Bearbeiten"))
                         }
                     }
                 }
@@ -95,28 +94,27 @@ struct StationListView: View {
                 }
             }
             .alert(
-                tr("Delete Station?", "Sender löschen?", lang),
+                tr("Delete Station?", "Sender löschen?"),
                 isPresented: Binding(
                     get: { stationToDelete != nil },
                     set: { if !$0 { stationToDelete = nil } }
                 ),
                 presenting: stationToDelete
             ) { station in
-                Button(tr("Delete", "Löschen", lang), role: .destructive) {
+                Button(tr("Delete", "Löschen"), role: .destructive) {
                     store.delete(station: station)
                     if player.currentStation?.id == station.id {
                         player.stop()
                     }
                     stationToDelete = nil
                 }
-                Button(tr("Cancel", "Abbrechen", lang), role: .cancel) {
+                Button(tr("Cancel", "Abbrechen"), role: .cancel) {
                     stationToDelete = nil
                 }
             } message: { station in
                 Text(tr(
                     "Do you really want to remove '\(station.displayName)'?",
-                    "Möchten Sie '\(station.displayName)' wirklich entfernen?",
-                    lang
+                    "Möchten Sie '\(station.displayName)' wirklich entfernen?"
                 ))
             }
             .sheet(isPresented: $showAddStation) {

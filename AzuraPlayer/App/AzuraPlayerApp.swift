@@ -1,8 +1,10 @@
 import SwiftUI
 
-/// Localized string: returns English by default, German if lang == "de".
-/// Use with @AppStorage("appLanguage") for SwiftUI reactivity.
-func tr(_ en: String, _ de: String, _ lang: String) -> String {
+/// Systemsprache: Deutsch wenn das Gerät auf Deutsch eingestellt ist, sonst Englisch.
+let appLang: String = Locale.preferredLanguages.first?.hasPrefix("de") == true ? "de" : "en"
+
+/// Localized string: returns English by default, German if appLang == "de".
+func tr(_ en: String, _ de: String, _ lang: String = appLang) -> String {
     lang == "de" ? de : en
 }
 

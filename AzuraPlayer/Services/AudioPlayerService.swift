@@ -158,8 +158,7 @@ class AudioPlayerService: ObservableObject {
 
     private func setPlaceholderNowPlayingInfo(for station: RadioStation) {
         var info = [String: Any]()
-        let lang = UserDefaults.standard.string(forKey: "appLanguage") ?? "en"
-        info[MPMediaItemPropertyTitle] = tr("Loading...", "Wird geladen...", lang)
+        info[MPMediaItemPropertyTitle] = tr("Loading...", "Wird geladen...")
         info[MPMediaItemPropertyArtist] = station.displayName
         info[MPNowPlayingInfoPropertyIsLiveStream] = true
         info[MPNowPlayingInfoPropertyPlaybackRate] = 1.0

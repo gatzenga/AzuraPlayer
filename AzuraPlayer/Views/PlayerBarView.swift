@@ -3,7 +3,6 @@ import SwiftUI
 struct PlayerBarView: View {
     @ObservedObject var player = AudioPlayerService.shared
     @ObservedObject var metadata = MetadataService.shared
-    @AppStorage("appLanguage") private var lang = "en"
     @AppStorage("themeColor") private var themeColorName = "blue"
     private var accentColor: Color { AppTheme.color(for: themeColorName) }
 
@@ -46,12 +45,12 @@ struct PlayerBarView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 if player.isBuffering {
-                    Text(tr("Connecting...", "Verbinde...", lang))
+                    Text(tr("Connecting...", "Verbinde..."))
                         .font(.subheadline).bold()
                         .foregroundStyle(.orange)
                         .lineLimit(1)
                 } else {
-                    Text(metadata.currentTrack?.title ?? (player.isPlaying ? tr("Live Stream", "Live Stream", lang) : tr("Paused", "Pausiert", lang)))
+                    Text(metadata.currentTrack?.title ?? (player.isPlaying ? tr("Live Stream", "Live Stream") : tr("Paused", "Pausiert")))
                         .font(.subheadline).bold()
                         .foregroundStyle(.primary)
                         .lineLimit(1)

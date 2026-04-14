@@ -7,8 +7,6 @@ struct PlayerView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
-    @AppStorage("appLanguage") private var lang = "en"
-
     @State private var showSleepTimerDialog = false
 
     @AppStorage("themeColor") private var themeColorName = "blue"
@@ -80,7 +78,7 @@ struct PlayerView: View {
                     .foregroundStyle(.secondary)
 
                 if player.isBuffering {
-                    Label(tr("Connecting...", "Verbinde...", lang), systemImage: "wifi.exclamationmark")
+                    Label(tr("Connecting...", "Verbinde..."), systemImage: "wifi.exclamationmark")
                         .font(.caption)
                         .foregroundStyle(.orange)
                         .padding(.horizontal, 8)
@@ -96,7 +94,7 @@ struct PlayerView: View {
                         .background(Color.green.opacity(0.1))
                         .clipShape(Capsule())
                 } else {
-                    Label(tr("Paused", "Pausiert", lang), systemImage: "pause.fill")
+                    Label(tr("Paused", "Pausiert"), systemImage: "pause.fill")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 8)
@@ -106,7 +104,7 @@ struct PlayerView: View {
                 }
 
                 if metadata.isLive {
-                    Text(tr("Live Broadcast", "Live Übertragung", lang))
+                    Text(tr("Live Broadcast", "Live Übertragung"))
                         .font(.caption)
                         .padding(.horizontal, 8).padding(.vertical, 4)
                         .background(.red.opacity(0.2))
@@ -114,11 +112,11 @@ struct PlayerView: View {
                         .clipShape(Capsule())
                 }
 
-                Text(metadata.currentTrack?.title ?? tr("Unknown Title", "Titel unbekannt", lang))
+                Text(metadata.currentTrack?.title ?? tr("Unknown Title", "Titel unbekannt"))
                     .font(.title2).bold().multilineTextAlignment(.center).lineLimit(2)
                     .padding(.horizontal, 20)
 
-                Text(metadata.currentTrack?.artist ?? tr("Unknown Artist", "Künstler unbekannt", lang))
+                Text(metadata.currentTrack?.artist ?? tr("Unknown Artist", "Künstler unbekannt"))
                     .font(.title3).foregroundStyle(.secondary).multilineTextAlignment(.center).lineLimit(1)
                     .padding(.horizontal, 20)
             }
@@ -182,22 +180,22 @@ struct PlayerView: View {
         .ignoresSafeArea(edges: .bottom)
         .onAppear { player.updateAirPlayState() }
         .confirmationDialog(
-            tr("Sleep Timer", "Sleep Timer", lang),
+            tr("Sleep Timer", "Sleep Timer"),
             isPresented: $showSleepTimerDialog,
             titleVisibility: .visible
         ) {
             if player.sleepTimerEnd != nil {
-                Button(tr("Cancel Timer", "Timer abbrechen", lang), role: .destructive) {
+                Button(tr("Cancel Timer", "Timer abbrechen"), role: .destructive) {
                     player.cancelSleepTimer()
                 }
             }
-            Button("15 \(tr("min", "Min", lang))") { player.setSleepTimer(minutes: 15) }
-            Button("30 \(tr("min", "Min", lang))") { player.setSleepTimer(minutes: 30) }
-            Button("45 \(tr("min", "Min", lang))") { player.setSleepTimer(minutes: 45) }
-            Button("1 \(tr("hour", "Std", lang))") { player.setSleepTimer(minutes: 60) }
-            Button("90 \(tr("min", "Min", lang))") { player.setSleepTimer(minutes: 90) }
-            Button("2 \(tr("hours", "Std", lang))") { player.setSleepTimer(minutes: 120) }
-            Button(tr("Cancel", "Abbrechen", lang), role: .cancel) {}
+            Button("15 \(tr("min", "Min"))") { player.setSleepTimer(minutes: 15) }
+            Button("30 \(tr("min", "Min"))") { player.setSleepTimer(minutes: 30) }
+            Button("45 \(tr("min", "Min"))") { player.setSleepTimer(minutes: 45) }
+            Button("1 \(tr("hour", "Std"))") { player.setSleepTimer(minutes: 60) }
+            Button("90 \(tr("min", "Min"))") { player.setSleepTimer(minutes: 90) }
+            Button("2 \(tr("hours", "Std"))") { player.setSleepTimer(minutes: 120) }
+            Button(tr("Cancel", "Abbrechen"), role: .cancel) {}
         }
     }
 

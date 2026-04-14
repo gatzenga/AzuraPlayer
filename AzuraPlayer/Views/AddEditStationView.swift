@@ -5,7 +5,6 @@ struct AddEditStationView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var hSize
     @ObservedObject var store: StationStore
-    @AppStorage("appLanguage") private var lang = "en"
     @AppStorage("themeColor") private var themeColorName = "blue"
     private var accentColor: Color { AppTheme.color(for: themeColorName) }
 
@@ -35,8 +34,8 @@ struct AddEditStationView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(tr("Stream Data", "Stream-Daten", lang)) {
-                    TextField(tr("Name (optional – uses station name)", "Name (optional – sonst Sendername)", lang), text: $customName)
+                Section(tr("Stream Data", "Stream-Daten")) {
+                    TextField(tr("Name (optional – uses station name)", "Name (optional – sonst Sendername)"), text: $customName)
                         .autocorrectionDisabled()
 
                     HStack(spacing: 8) {
@@ -47,7 +46,7 @@ struct AddEditStationView: View {
                             .padding(.vertical, 8)
                             .background(Color(.tertiarySystemFill))
                             .clipShape(RoundedRectangle(cornerRadius: 8))
-                        TextField(tr("(HLS recommended)", "(HLS empfohlen)", lang), text: urlPathBinding)
+                        TextField(tr("(HLS recommended)", "(HLS empfohlen)"), text: urlPathBinding)
                             .keyboardType(.URL)
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.never)
@@ -65,7 +64,7 @@ struct AddEditStationView: View {
                         .disabled(autoFillAPI)
                         .foregroundStyle(autoFillAPI ? .secondary : .primary)
 
-                    Toggle(tr("Fill API URL from stream URL", "API-URL aus Stream-URL ableiten", lang), isOn: $autoFillAPI)
+                    Toggle(tr("Fill API URL from stream URL", "API-URL aus Stream-URL ableiten"), isOn: $autoFillAPI)
                         .onChange(of: autoFillAPI) { _, enabled in
                             if enabled, let derived = derivedAPIURL(from: streamURL) {
                                 apiURL = derived
@@ -73,8 +72,8 @@ struct AddEditStationView: View {
                         }
                 }
 
-                Section(tr("Cover", "Cover", lang)) {
-                    Toggle(tr("Show song cover (instead of station image)", "Song-Cover anzeigen (statt Senderbild)", lang), isOn: $showSongArt)
+                Section(tr("Cover", "Cover")) {
+                    Toggle(tr("Show song cover (instead of station image)", "Song-Cover anzeigen (statt Senderbild)"), isOn: $showSongArt)
 
                     PhotosPicker(
                         selection: $selectedPhoto,
@@ -94,14 +93,14 @@ struct AddEditStationView: View {
                                     .font(.body)
                             }
                             Text(customImageData == nil
-                                 ? tr("Choose custom cover", "Custom Cover wählen", lang)
-                                 : tr("Change cover", "Cover ändern", lang))
+                                 ? tr("Choose custom cover", "Custom Cover wählen")
+                                 : tr("Change cover", "Cover ändern"))
                                 .font(.callout)
                         }
                     }
 
                     if customImageData != nil {
-                        Button(tr("Remove cover", "Cover entfernen", lang), role: .destructive) {
+                        Button(tr("Remove cover", "Cover entfernen"), role: .destructive) {
                             customImageData = nil
                             selectedPhoto = nil
                         }
@@ -111,7 +110,7 @@ struct AddEditStationView: View {
                 Section {
                     VStack(alignment: .leading, spacing: 12) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(tr("AzuraCast API format:", "AzuraCast API-Format:", lang))
+                            Text(tr("AzuraCast API format:", "AzuraCast API-Format:"))
                                 .font(.caption.bold())
                                 .foregroundStyle(.primary)
                             Text(verbatim: "https://your-domain.com/api/nowplaying/station_shortcode")
@@ -122,7 +121,7 @@ struct AddEditStationView: View {
                         Divider()
 
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(tr("Supported formats", "Unterstützte Formate", lang))
+                            Text(tr("Supported formats", "Unterstützte Formate"))
                                 .font(.caption.bold())
                                 .foregroundStyle(.primary)
                             Text("HLS, MP3, AAC")
@@ -133,13 +132,12 @@ struct AddEditStationView: View {
                         Divider()
 
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(tr("Why HTTPS only?", "Warum nur HTTPS?", lang))
+                            Text(tr("Why HTTPS only?", "Warum nur HTTPS?"))
                                 .font(.caption.bold())
                                 .foregroundStyle(.primary)
                             Text(tr(
                                 "HTTP streams are not reliably supported due to protocol incompatibilities (e.g. ICY/Icecast). HTTPS ensures stable playback for both public stations and AzuraCast.",
-                                "HTTP-Streams werden aufgrund von Protokoll-Inkompatibilitäten (z.B. ICY/Icecast) nicht zuverlässig unterstützt. HTTPS gewährleistet stabile Wiedergabe für öffentliche Sender und AzuraCast.",
-                                lang))
+                                "HTTP-Streams werden aufgrund von Protokoll-Inkompatibilitäten (z.B. ICY/Icecast) nicht zuverlässig unterstützt. HTTPS gewährleistet stabile Wiedergabe für öffentliche Sender und AzuraCast."))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -148,8 +146,8 @@ struct AddEditStationView: View {
                 }
             }
             .navigationTitle(isEditing
-                             ? tr("Edit Station", "Sender bearbeiten", lang)
-                             : tr("Add Station", "Sender hinzufügen", lang))
+                             ? tr("Edit Station", "Sender bearbeiten")
+                             : tr("Add Station", "Sender hinzufügen"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

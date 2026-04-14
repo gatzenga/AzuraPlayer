@@ -4,8 +4,7 @@ import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @EnvironmentObject var store: StationStore
-    @AppStorage("isDarkModeEnabled") private var isDarkModeEnabled = false
-    @AppStorage("appLanguage") private var lang = "en"
+    @AppStorage("appAppearance") private var appAppearance = "system"
     @AppStorage("themeColor") private var themeColorName = "blue"
 
     @State private var exportURL: URL?
@@ -20,29 +19,21 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section(tr("Appearance", "Erscheinungsbild", lang)) {
-                    Toggle(tr("Enable Dark Mode", "Dark Mode aktivieren", lang), isOn: $isDarkModeEnabled)
-                    Text(tr(
-                        "When enabled, the app is always shown in dark mode.",
-                        "Wenn aktiviert, wird die App immer im Dunklen Modus angezeigt.",
-                        lang
-                    ))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                    Picker(tr("Language", "Sprache", lang), selection: $lang) {
-                        Text("English").tag("en")
-                        Text("Deutsch").tag("de")
+                Section(tr("Appearance", "Erscheinungsbild")) {
+                    Picker(tr("Appearance", "Erscheinungsbild"), selection: $appAppearance) {
+                        Text(tr("System", "System")).tag("system")
+                        Text(tr("Light", "Hell")).tag("light")
+                        Text(tr("Dark", "Dunkel")).tag("dark")
                     }
-                    .id(lang + themeColorName)
+                    .id(appAppearance + themeColorName)
 
-                    Picker(tr("Accent Color", "Akzentfarbe", lang), selection: $themeColorName) {
+                    Picker(tr("Accent Color", "Akzentfarbe"), selection: $themeColorName) {
                         ForEach(AppTheme.options, id: \.name) { option in
                             HStack {
                                 Circle()
                                     .fill(option.color)
                                     .frame(width: 14, height: 14)
-                                Text(lang == "de" ? option.nameDE : option.nameEN)
+                                Text(appLang == "de" ? option.nameDE : option.nameEN)
                             }
                             .tag(option.name)
                         }
@@ -50,14 +41,14 @@ struct SettingsView: View {
                     .id(themeColorName)
                 }
 
-                Section(tr("Stations", "Sender", lang)) {
+                Section(tr("Stations", "Sender")) {
                     Button {
                         exportStations()
                     } label: {
                         HStack {
                             Image(systemName: "square.and.arrow.up")
                                 .foregroundStyle(.secondary)
-                            Text(tr("Export Stations", "Sender exportieren", lang))
+                            Text(tr("Export Stations", "Sender exportieren"))
                                 .foregroundStyle(.primary)
                             Spacer()
                             Text("\(store.stations.count)")
@@ -72,13 +63,13 @@ struct SettingsView: View {
                         HStack {
                             Image(systemName: "square.and.arrow.down")
                                 .foregroundStyle(.secondary)
-                            Text(tr("Import Stations", "Sender importieren", lang))
+                            Text(tr("Import Stations", "Sender importieren"))
                                 .foregroundStyle(.primary)
                         }
                     }
                 }
 
-                Section(tr("Links & Contact", "Links & Kontakt", lang)) {
+                Section(tr("Links & Contact", "Links & Kontakt")) {
                     if let url = URL(string: "https://github.com/gatzenga/AzuraPlayer") {
                         Link(destination: url) {
                             HStack {
@@ -99,7 +90,7 @@ struct SettingsView: View {
                                 Image(systemName: "hand.raised")
                                     .foregroundStyle(.secondary)
                                     .frame(width: 24)
-                                Text(tr("Privacy Policy", "Datenschutz", lang))
+                                Text(tr("Privacy Policy", "Datenschutz"))
                                 Spacer()
                                 Image(systemName: "arrow.up.right")
                                     .font(.caption)
@@ -113,7 +104,7 @@ struct SettingsView: View {
                                 Image(systemName: "envelope")
                                     .foregroundStyle(.secondary)
                                     .frame(width: 24)
-                                Text(tr("Contact", "Kontakt", lang))
+                                Text(tr("Contact", "Kontakt"))
                                 Spacer()
                                 Image(systemName: "arrow.up.right")
                                     .font(.caption)
@@ -129,8 +120,7 @@ struct SettingsView: View {
                     Text("AzuraPlayer \(version) (\(build))")
                     Text(tr(
                         "AzuraPlayer is an unofficial app and has no affiliation with AzuraCast or its developers.",
-                        "AzuraPlayer ist eine inoffizielle App und steht in keiner Verbindung zu AzuraCast oder dessen Entwicklern.",
-                        lang
+                        "AzuraPlayer ist eine inoffizielle App und steht in keiner Verbindung zu AzuraCast oder dessen Entwicklern."
                     ))
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -143,9 +133,8 @@ struct SettingsView: View {
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
-            .preferredColorScheme(isDarkModeEnabled ? .dark : .light)
             .background(Color(UIColor.systemGroupedBackground))
-            .navigationTitle(tr("Settings", "Einstellungen", lang))
+            .navigationTitle(tr("Settings", "Einstellungen"))
             .tint(accentColor)
             .sheet(item: $exportURL) { url in
                 ShareSheet(url: url)
@@ -158,33 +147,32 @@ struct SettingsView: View {
                 handleImport(result: result)
             }
             .alert(
-                tr("Import Stations?", "Sender importieren?", lang),
+                tr("Import Stations?", "Sender importieren?"),
                 isPresented: Binding(
                     get: { pendingImport != nil },
                     set: { if !$0 { pendingImport = nil } }
                 ),
                 presenting: pendingImport
             ) { stations in
-                Button(tr("Import", "Importieren", lang)) {
+                Button(tr("Import", "Importieren")) {
                     store.importStations(stations)
                     pendingImport = nil
                 }
-                Button(tr("Cancel", "Abbrechen", lang), role: .cancel) {
+                Button(tr("Cancel", "Abbrechen"), role: .cancel) {
                     pendingImport = nil
                 }
             } message: { stations in
                 Text(tr(
                     "Do you really want to import \(stations.count) station(s)?",
-                    "Möchtest du \(stations.count) Sender wirklich importieren?",
-                    lang
+                    "Möchtest du \(stations.count) Sender wirklich importieren?"
                 ))
             }
-            .alert(tr("Import failed", "Import fehlgeschlagen", lang), isPresented: $showImportError) {
+            .alert(tr("Import failed", "Import fehlgeschlagen"), isPresented: $showImportError) {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(importErrorMessage ?? "")
             }
-            .alert(tr("Export failed", "Export fehlgeschlagen", lang), isPresented: $showExportError) {
+            .alert(tr("Export failed", "Export fehlgeschlagen"), isPresented: $showExportError) {
                 Button("OK", role: .cancel) {}
             }
         }
@@ -220,8 +208,7 @@ struct SettingsView: View {
             if newStations.isEmpty {
                 importErrorMessage = tr(
                     "All stations already exist in your list.",
-                    "Alle Sender sind bereits in deiner Liste vorhanden.",
-                    lang
+                    "Alle Sender sind bereits in deiner Liste vorhanden."
                 )
                 showImportError = true
             } else {
