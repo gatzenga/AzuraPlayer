@@ -10,7 +10,7 @@ func tr(_ en: String, _ de: String, _ lang: String = appLang) -> String {
 
 @main
 struct AzuraPlayerApp: App {
-    @StateObject private var store = StationStore()
+    @StateObject private var store = StationStore.shared
     @StateObject private var player = AudioPlayerService.shared
     @AppStorage("themeColor") private var themeColorName = "blue"
 
