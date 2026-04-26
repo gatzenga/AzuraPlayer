@@ -3,6 +3,8 @@ import SwiftUI
 import Combine
 
 class StationStore: ObservableObject {
+    static let shared = StationStore()
+
     @Published var stations: [RadioStation] = []
 
     private let saveKey = "saved_stations"
