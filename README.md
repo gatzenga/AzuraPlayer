@@ -20,6 +20,8 @@ AzuraPlayer is an unofficial app and is not affiliated with or endorsed by the A
 
 This is my first iOS app. I work in IT, but not as a software developer, so I used Claude (AI) as a support tool throughout the development process. I want to be transparent about that.
 
+**Website:** https://vkugler.app
+
 https://testflight.apple.com/join/nFmb5g4Q
 
 ### iPhone
