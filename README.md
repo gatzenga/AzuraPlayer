@@ -4,6 +4,10 @@
 
 AzuraPlayer lets you stream your self-hosted AzuraCast stations – or any other radio stream – right from your iPhone or iPad.
 
+**Website:** https://vkugler.app
+**App Store:**: https://apps.apple.com/us/app/azuraplayer/id6761739352
+**TestFlight:** https://testflight.apple.com/join/nFmb5g4Q
+
 **Features:**
 - Add multiple AzuraCast stations
 - Support for other radio stream links
@@ -19,10 +23,6 @@ AzuraPlayer lets you stream your self-hosted AzuraCast stations – or any other
 AzuraPlayer is an unofficial app and is not affiliated with or endorsed by the AzuraCast developers.
 
 This is my first iOS app. I work in IT, but not as a software developer, so I used Claude (AI) as a support tool throughout the development process. I want to be transparent about that.
-
-**Website:** https://vkugler.app
-
-https://testflight.apple.com/join/nFmb5g4Q
 
 ### iPhone
 
