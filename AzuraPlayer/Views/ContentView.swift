@@ -75,8 +75,10 @@ struct ContentView: View {
         .sheet(isPresented: $showPlayer) {
             PlayerView()
                 .presentationDetents([.large])
+                .presentationSizing(.page)
                 .presentationBackgroundInteraction(.enabled)
                 .presentationCornerRadius(24)
+                .presentationDragIndicator(.visible)
                 .tint(accentColor)
                 .id(showPlayer)
         }
