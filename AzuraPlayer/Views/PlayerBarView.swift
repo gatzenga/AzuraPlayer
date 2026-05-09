@@ -32,7 +32,7 @@ struct PlayerBarView: View {
             }
             .frame(width: 48, height: 48)
             .clipShape(RoundedRectangle(cornerRadius: 10))
-            .shadow(color: .black.opacity(0.1), radius: 2, y: 1)
+            .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
             .overlay(alignment: .bottomTrailing) {
                 if player.isBuffering || player.isPlaying {
                     Circle()
@@ -88,16 +88,27 @@ struct PlayerBarView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(
-            Color(UIColor.systemBackground)
-                .opacity(0.85)
-                .background(.ultraThinMaterial)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .shadow(color: .black.opacity(0.15), radius: 15, y: 8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-        )
+        .contentShape(Rectangle())
+        .modifier(LiquidGlassBar())
+    }
+}
+
+private struct LiquidGlassBar: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content
+                .glassEffect(in: RoundedRectangle(cornerRadius: 32, style: .continuous))
+        } else {
+            content
+                .background(
+                    .ultraThinMaterial,
+                    in: RoundedRectangle(cornerRadius: 32, style: .continuous)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 32, style: .continuous)
+                        .stroke(Color.primary.opacity(0.10), lineWidth: 0.5)
+                )
+                .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
+        }
     }
 }
