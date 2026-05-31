@@ -160,6 +160,7 @@ class AudioPlayerService: ObservableObject {
         var info = [String: Any]()
         info[MPMediaItemPropertyTitle] = tr("Loading...", "Wird geladen...")
         info[MPMediaItemPropertyArtist] = station.displayName
+        info[MPMediaItemPropertyAlbumTitle] = station.displayName
         info[MPNowPlayingInfoPropertyIsLiveStream] = true
         info[MPNowPlayingInfoPropertyPlaybackRate] = 1.0
         info[MPNowPlayingInfoPropertyDefaultPlaybackRate] = 1.0
@@ -316,6 +317,7 @@ class AudioPlayerService: ObservableObject {
 
         info[MPMediaItemPropertyTitle] = title
         info[MPMediaItemPropertyArtist] = artist
+        info[MPMediaItemPropertyAlbumTitle] = currentStation?.displayName
         info[MPNowPlayingInfoPropertyIsLiveStream] = true
         info[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
         info[MPNowPlayingInfoPropertyDefaultPlaybackRate] = 1.0
