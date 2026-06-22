@@ -4,10 +4,25 @@ struct PlayerBarView: View {
     @ObservedObject var player = AudioPlayerService.shared
     @ObservedObject var metadata = MetadataService.shared
     @AppStorage("themeColor") private var themeColorName = "blue"
+    @Environment(\.horizontalSizeClass) private var hSizeClass
     private var accentColor: Color { AppTheme.color(for: themeColorName) }
+    private var isRegular: Bool { hSizeClass == .regular }
+
+    // iPad bekommt eine kompakte, aber merklich größere Variante
+    private var coverSize: CGFloat { isRegular ? 56 : 40 }
+    private var coverCorner: CGFloat { isRegular ? 10 : 8 }
+    private var vPad: CGFloat { isRegular ? 10 : 8 }
+    private var hPad: CGFloat { isRegular ? 18 : 16 }
+    private var hStackSpacing: CGFloat { isRegular ? 14 : 12 }
+    private var controlSize: CGFloat { isRegular ? 36 : 30 }
+    private var playSize: CGFloat { isRegular ? 44 : 36 }
+    private var titleFont: Font { isRegular ? .body : .subheadline }
+    private var subtitleFont: Font { isRegular ? .footnote : .caption }
+    private var playIconFont: Font { isRegular ? .title3 : .body }
+    private var controlIconFont: Font { isRegular ? .title3 : .callout }
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: hStackSpacing) {
             ZStack {
                 if let station = player.currentStation,
                    station.showSongArt,
@@ -30,8 +45,8 @@ struct PlayerBarView: View {
                         .overlay(Image(systemName: "music.note").foregroundStyle(.secondary))
                 }
             }
-            .frame(width: 48, height: 48)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .frame(width: coverSize, height: coverSize)
+            .clipShape(RoundedRectangle(cornerRadius: coverCorner))
             .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
             .overlay(alignment: .bottomTrailing) {
                 if player.isBuffering || player.isPlaying {
@@ -43,21 +58,21 @@ struct PlayerBarView: View {
                 }
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 if player.isBuffering {
                     Text(tr("Connecting...", "Verbinde..."))
-                        .font(.subheadline).bold()
+                        .font(titleFont).bold()
                         .foregroundStyle(.orange)
                         .lineLimit(1)
                 } else {
                     Text(metadata.currentTrack?.title ?? (player.isPlaying ? tr("Live Stream", "Live Stream") : tr("Paused", "Pausiert")))
-                        .font(.subheadline).bold()
+                        .font(titleFont).bold()
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                 }
 
                 Text(metadata.currentTrack?.artist ?? player.currentStation?.displayName ?? "")
-                    .font(.caption)
+                    .font(subtitleFont)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
@@ -68,9 +83,9 @@ struct PlayerBarView: View {
                 player.togglePlayPause()
             } label: {
                 Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.title3)
+                    .font(playIconFont)
                     .foregroundStyle(.white)
-                    .frame(width: 36, height: 36)
+                    .frame(width: playSize, height: playSize)
                     .background(accentColor)
                     .clipShape(Circle())
             }
@@ -80,14 +95,14 @@ struct PlayerBarView: View {
                 player.stop()
             } label: {
                 Image(systemName: "xmark.circle.fill")
-                    .font(.title3)
+                    .font(controlIconFont)
                     .foregroundStyle(accentColor)
-                    .frame(width: 36, height: 36)
+                    .frame(width: controlSize, height: controlSize)
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, hPad)
+        .padding(.vertical, vPad)
         .contentShape(Rectangle())
         .modifier(LiquidGlassBar())
     }
@@ -97,15 +112,15 @@ private struct LiquidGlassBar: ViewModifier {
     func body(content: Content) -> some View {
         if #available(iOS 26.0, *) {
             content
-                .glassEffect(in: RoundedRectangle(cornerRadius: 32, style: .continuous))
+                .glassEffect(.regular, in: Capsule(style: .continuous))
         } else {
             content
                 .background(
                     .ultraThinMaterial,
-                    in: RoundedRectangle(cornerRadius: 32, style: .continuous)
+                    in: Capsule(style: .continuous)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 32, style: .continuous)
+                    Capsule(style: .continuous)
                         .stroke(Color.primary.opacity(0.10), lineWidth: 0.5)
                 )
                 .shadow(color: .black.opacity(0.12), radius: 10, y: 4)

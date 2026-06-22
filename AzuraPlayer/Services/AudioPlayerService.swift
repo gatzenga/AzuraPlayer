@@ -12,7 +12,7 @@ class AudioPlayerService: ObservableObject {
     @Published var sleepTimerEnd: Date? = nil
     @Published var isAirPlayActive: Bool = false
 
-    private var player: AVPlayer?
+    private let player: AVPlayer = AVPlayer()
     private var playerItem: AVPlayerItem?
     private var statusObserver: NSKeyValueObservation?
     private var timeControlObserver: NSKeyValueObservation?
@@ -28,6 +28,7 @@ class AudioPlayerService: ObservableObject {
         setupAudioSession()
         setupRemoteControls()
         setupRouteObserver()
+        setupInterruptionObserver()
     }
 
     private func setupRouteObserver() {
@@ -42,6 +43,48 @@ class AudioPlayerService: ObservableObject {
 
     @objc private func audioRouteChanged(_ notification: Notification) {
         updateAirPlayState()
+    }
+
+    private func setupInterruptionObserver() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAudioInterruption(_:)),
+            name: AVAudioSession.interruptionNotification,
+            object: nil
+        )
+    }
+
+    @objc private func handleAudioInterruption(_ notification: Notification) {
+        guard
+            let info = notification.userInfo,
+            let typeRaw = info[AVAudioSessionInterruptionTypeKey] as? UInt,
+            let type = AVAudioSession.InterruptionType(rawValue: typeRaw)
+        else { return }
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            switch type {
+            case .began:
+                // System hat die Wiedergabe unterbrochen (z.B. CarPlay-Mute, Anruf).
+                if self.isPlaying { self.pause() }
+            case .ended:
+                guard
+                    let optionsRaw = info[AVAudioSessionInterruptionOptionKey] as? UInt,
+                    AVAudioSession.InterruptionOptions(rawValue: optionsRaw).contains(.shouldResume),
+                    self.currentStation != nil
+                else { return }
+                // iOS deaktiviert die Audio-Session bei einer Interruption — vor dem Resume
+                // explizit reaktivieren, sonst bleibt der Player lautlos obwohl er "spielt".
+                do {
+                    try AVAudioSession.sharedInstance().setActive(true)
+                } catch {
+                    print("[AudioPlayerService] Reaktivierung nach Interruption fehlgeschlagen: \(error)")
+                }
+                self.resume()
+            @unknown default:
+                break
+            }
+        }
     }
 
     func updateAirPlayState() {
@@ -86,33 +129,35 @@ class AudioPlayerService: ObservableObject {
         currentStation = station
         isBuffering = true
 
-        player?.pause()
+        player.pause()
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemFailedToPlayToEndTime, object: playerItem)
         NotificationCenter.default.removeObserver(self, name: AVPlayerItem.playbackStalledNotification, object: playerItem)
-        player = nil
-        playerItem = nil
         statusObserver?.invalidate()
+        statusObserver = nil
         timeControlObserver?.invalidate()
+        timeControlObserver = nil
+        playerItem = nil
 
         setPlaceholderNowPlayingInfo(for: station)
 
-        playerItem = AVPlayerItem(url: url)
-        playerItem?.preferredForwardBufferDuration = 5
-        player = AVPlayer(playerItem: playerItem)
-        player?.allowsExternalPlayback = false
-        player?.automaticallyWaitsToMinimizeStalling = true
+        let newItem = AVPlayerItem(url: url)
+        newItem.preferredForwardBufferDuration = 5
+        playerItem = newItem
+        player.allowsExternalPlayback = false
+        player.automaticallyWaitsToMinimizeStalling = true
+        player.replaceCurrentItem(with: newItem)
 
-        statusObserver = playerItem?.observe(\.status, options: [.new]) { [weak self] item, _ in
+        statusObserver = newItem.observe(\.status, options: [.new]) { [weak self] item, _ in
             DispatchQueue.main.async {
                 if item.status == .readyToPlay {
-                    self?.player?.play()
+                    self?.player.play()
                 } else if item.status == .failed {
                     self?.scheduleReconnect()
                 }
             }
         }
 
-        timeControlObserver = player?.observe(\.timeControlStatus, options: [.new]) { [weak self] avPlayer, _ in
+        timeControlObserver = player.observe(\.timeControlStatus, options: [.new]) { [weak self] avPlayer, _ in
             DispatchQueue.main.async {
                 guard self?.isPlaying == true else { return }
                 switch avPlayer.timeControlStatus {
@@ -177,15 +222,15 @@ class AudioPlayerService: ObservableObject {
     }
 
     func pause() {
-        player?.pause()
+        player.pause()
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemFailedToPlayToEndTime, object: playerItem)
         NotificationCenter.default.removeObserver(self, name: AVPlayerItem.playbackStalledNotification, object: playerItem)
-        player = nil
-        playerItem = nil
         statusObserver?.invalidate()
         statusObserver = nil
         timeControlObserver?.invalidate()
         timeControlObserver = nil
+        playerItem = nil
+        player.replaceCurrentItem(with: nil)
 
         isPlaying = false
         isBuffering = false
@@ -203,15 +248,15 @@ class AudioPlayerService: ObservableObject {
     }
 
     func stop() {
-        player?.pause()
+        player.pause()
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemFailedToPlayToEndTime, object: playerItem)
         NotificationCenter.default.removeObserver(self, name: AVPlayerItem.playbackStalledNotification, object: playerItem)
-        player = nil
-        playerItem = nil
         statusObserver?.invalidate()
         statusObserver = nil
         timeControlObserver?.invalidate()
         timeControlObserver = nil
+        playerItem = nil
+        player.replaceCurrentItem(with: nil)
         isPlaying = false
         isBuffering = false
         stopMetadataTimer()

@@ -44,7 +44,7 @@ struct ContentView: View {
                     VStack {
                         Spacer()
                         PlayerBarView()
-                            .padding(.horizontal, 16)
+                            .padding(.horizontal, 20)
                             .padding(.bottom, geometry.safeAreaInsets.bottom + 49 + 8)
                             .onTapGesture {
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
