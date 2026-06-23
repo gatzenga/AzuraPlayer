@@ -20,7 +20,6 @@ class AudioPlayerService: ObservableObject {
     private var reconnectTimer: Timer?
     private var reconnectAttempts = 0
     private var metadataTimer: Timer?
-    private var wasPlayingBeforeInterruption = false
 
     private var currentArtwork: MPMediaItemArtwork?
     private var lastDisplayedArtURL: String?
@@ -66,27 +65,28 @@ class AudioPlayerService: ObservableObject {
             guard let self else { return }
             switch type {
             case .began:
-                // System hat die Wiedergabe unterbrochen (z.B. CarPlay-Mute, Anruf).
-                // Verhält sich exakt wie ein Druck auf die Pause-Taste.
-                guard self.isPlaying else { return }
-                self.pause()
-                self.wasPlayingBeforeInterruption = true
+                // Live-Stream: NICHT aktiv pausieren oder den Player zurücksetzen.
+                // Ist es nur eine Ausgabe-Stummschaltung (CarPlay-Mute), läuft der Stream
+                // einfach weiter; ist es eine echte Interruption, pausiert iOS den Player
+                // selbst und wir setzen ihn bei .ended wieder fort.
+                break
             case .ended:
-                // Verhält sich exakt wie ein Druck auf die Play-Taste — aber nur, wenn
-                // wir vor der Unterbrechung gespielt haben und das System ein Resume erlaubt.
+                // Nur fortsetzen, wenn der Nutzer vorher spielte (kein manuelles Pause/Stop
+                // dazwischen) und der Player noch ein Item hat — dann am bestehenden Item
+                // weiterspielen, ohne Cover/Sender neu zu laden.
                 guard
-                    self.wasPlayingBeforeInterruption,
-                    self.currentStation != nil
+                    self.isPlaying,
+                    self.currentStation != nil,
+                    self.playerItem != nil
                 else { return }
-                self.wasPlayingBeforeInterruption = false
-
-                let shouldResume: Bool = {
-                    guard let optionsRaw = info[AVAudioSessionInterruptionOptionKey] as? UInt else { return false }
-                    return AVAudioSession.InterruptionOptions(rawValue: optionsRaw).contains(.shouldResume)
-                }()
-                guard shouldResume else { return }
-
-                self.resume()
+                // iOS deaktiviert die Audio-Session bei einer echten Interruption — vor dem
+                // Weiterspielen reaktivieren, sonst bleibt der Player lautlos obwohl er "spielt".
+                do {
+                    try AVAudioSession.sharedInstance().setActive(true)
+                } catch {
+                    print("[AudioPlayerService] Reaktivierung nach Interruption fehlgeschlagen: \(error)")
+                }
+                self.player.play()
             @unknown default:
                 break
             }
@@ -237,7 +237,6 @@ class AudioPlayerService: ObservableObject {
     }
 
     func pause() {
-        wasPlayingBeforeInterruption = false
         player.pause()
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemFailedToPlayToEndTime, object: playerItem)
         NotificationCenter.default.removeObserver(self, name: AVPlayerItem.playbackStalledNotification, object: playerItem)
@@ -264,7 +263,6 @@ class AudioPlayerService: ObservableObject {
     }
 
     func stop() {
-        wasPlayingBeforeInterruption = false
         player.pause()
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemFailedToPlayToEndTime, object: playerItem)
         NotificationCenter.default.removeObserver(self, name: AVPlayerItem.playbackStalledNotification, object: playerItem)
