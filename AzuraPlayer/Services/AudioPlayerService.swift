@@ -20,6 +20,7 @@ class AudioPlayerService: ObservableObject {
     private var reconnectTimer: Timer?
     private var reconnectAttempts = 0
     private var metadataTimer: Timer?
+    private var wasPlayingBeforeInterruption = false
 
     private var currentArtwork: MPMediaItemArtwork?
     private var lastDisplayedArtURL: String?
@@ -66,20 +67,25 @@ class AudioPlayerService: ObservableObject {
             switch type {
             case .began:
                 // System hat die Wiedergabe unterbrochen (z.B. CarPlay-Mute, Anruf).
-                if self.isPlaying { self.pause() }
+                // Verhält sich exakt wie ein Druck auf die Pause-Taste.
+                guard self.isPlaying else { return }
+                self.pause()
+                self.wasPlayingBeforeInterruption = true
             case .ended:
+                // Verhält sich exakt wie ein Druck auf die Play-Taste — aber nur, wenn
+                // wir vor der Unterbrechung gespielt haben und das System ein Resume erlaubt.
                 guard
-                    let optionsRaw = info[AVAudioSessionInterruptionOptionKey] as? UInt,
-                    AVAudioSession.InterruptionOptions(rawValue: optionsRaw).contains(.shouldResume),
+                    self.wasPlayingBeforeInterruption,
                     self.currentStation != nil
                 else { return }
-                // iOS deaktiviert die Audio-Session bei einer Interruption — vor dem Resume
-                // explizit reaktivieren, sonst bleibt der Player lautlos obwohl er "spielt".
-                do {
-                    try AVAudioSession.sharedInstance().setActive(true)
-                } catch {
-                    print("[AudioPlayerService] Reaktivierung nach Interruption fehlgeschlagen: \(error)")
-                }
+                self.wasPlayingBeforeInterruption = false
+
+                let shouldResume: Bool = {
+                    guard let optionsRaw = info[AVAudioSessionInterruptionOptionKey] as? UInt else { return false }
+                    return AVAudioSession.InterruptionOptions(rawValue: optionsRaw).contains(.shouldResume)
+                }()
+                guard shouldResume else { return }
+
                 self.resume()
             @unknown default:
                 break
@@ -149,10 +155,19 @@ class AudioPlayerService: ObservableObject {
 
         statusObserver = newItem.observe(\.status, options: [.new]) { [weak self] item, _ in
             DispatchQueue.main.async {
+                guard let self else { return }
                 if item.status == .readyToPlay {
-                    self?.player.play()
+                    // iOS deaktiviert die Audio-Session bei einer Interruption. Unmittelbar
+                    // vor dem Abspielen reaktivieren — sonst bleibt der Player nach einem
+                    // CarPlay-Unmute lautlos, obwohl er "spielt". Idempotent beim normalen Start.
+                    do {
+                        try AVAudioSession.sharedInstance().setActive(true)
+                    } catch {
+                        print("[AudioPlayerService] Reaktivierung der Audio-Session fehlgeschlagen: \(error)")
+                    }
+                    self.player.play()
                 } else if item.status == .failed {
-                    self?.scheduleReconnect()
+                    self.scheduleReconnect()
                 }
             }
         }
@@ -222,6 +237,7 @@ class AudioPlayerService: ObservableObject {
     }
 
     func pause() {
+        wasPlayingBeforeInterruption = false
         player.pause()
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemFailedToPlayToEndTime, object: playerItem)
         NotificationCenter.default.removeObserver(self, name: AVPlayerItem.playbackStalledNotification, object: playerItem)
@@ -248,6 +264,7 @@ class AudioPlayerService: ObservableObject {
     }
 
     func stop() {
+        wasPlayingBeforeInterruption = false
         player.pause()
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemFailedToPlayToEndTime, object: playerItem)
         NotificationCenter.default.removeObserver(self, name: AVPlayerItem.playbackStalledNotification, object: playerItem)
