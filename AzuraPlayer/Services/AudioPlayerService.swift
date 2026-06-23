@@ -42,6 +42,9 @@ class AudioPlayerService: ObservableObject {
     }
 
     @objc private func audioRouteChanged(_ notification: Notification) {
+        let reasonRaw = (notification.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt) ?? 0
+        let outputs = AVAudioSession.sharedInstance().currentRoute.outputs.map { "\($0.portType.rawValue)(\($0.portName))" }
+        print("[CarPlayDiag] routeChange reason=\(reasonRaw) outputs=\(outputs) isPlaying=\(isPlaying)")
         updateAirPlayState()
     }
 
@@ -60,6 +63,9 @@ class AudioPlayerService: ObservableObject {
             let typeRaw = info[AVAudioSessionInterruptionTypeKey] as? UInt,
             let type = AVAudioSession.InterruptionType(rawValue: typeRaw)
         else { return }
+
+        let optionsRaw = (info[AVAudioSessionInterruptionOptionKey] as? UInt) ?? 0
+        print("[CarPlayDiag] interruption type=\(type == .began ? "began" : "ended") options=\(optionsRaw) shouldResume=\(AVAudioSession.InterruptionOptions(rawValue: optionsRaw).contains(.shouldResume)) isPlaying=\(isPlaying)")
 
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
